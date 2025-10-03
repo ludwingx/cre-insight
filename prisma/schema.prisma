@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  nombreCompleto String
+  email          String    @unique
+  passwordHash   String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relación opcional: si un usuario registra/gestiona posts
+  posts          Post[]
+}
+
+model Post {
+  id_publicacion String   @id
+  pagina         String
+  fecha          DateTime
+  timestamp      BigInt
+  texto          String?
+  enlaceExterno  String?
+  meGusta        Int      @default(0)
+  compartidos    Int      @default(0)
+  reacciones     Int      @default(0)
+  hashtags       String[] // PostgreSQL soporta arrays
+  tieneImagen    Boolean  @default(false)
+  urlImagen      String?
+  textoOcr       String?
+  urlPublicacion String
+  urlFacebook    String?
+  feedbackId     String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relación con usuario (opcional)
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id])
+}
