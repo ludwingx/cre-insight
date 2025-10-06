@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "sonner";
 
 
 ({
@@ -14,9 +15,9 @@ import "./globals.css";
 });
 
 export const metadata: Metadata = {
-  title: "Libre Scraping",
+  title: "C.R.E. Insight",
   description: "Aplicación para visualizar publicaciones de perfiles de Facebook extraídas automáticamente.",
-  keywords: ["libre scraping", "scraping", "facebook", "publicaciones", "perfiles", "automático"],
+  keywords: ["C.R.E. Insight", "scraping", "facebook", "publicaciones", "perfiles", "automático"],
   authors: [{ name: "Other Mind" }]
 };
 
@@ -35,6 +36,7 @@ export default function RootLayout({
       <head />
       <body>
         {children}
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

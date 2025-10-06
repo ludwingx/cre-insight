@@ -9,9 +9,9 @@ export default async function RegisterPage() {
     redirect("/dashboard");
   }
   return (
-    <div className="bg-muted flex min-h-svh flex-col items-center justify-start px-4 md:px-8 pt-2 md:pt-8 pb-0">
-      <div className="w-full max-w-sm md:max-w-3xl">
-        <RegisterForm />
+    <div className="min-h-screen w-full bg-gradient-to-br from-white via-white to-slate-100">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16 lg:py-20">
+        <RegisterForm className="mx-auto max-w-md" />
       </div>
     </div>
   );

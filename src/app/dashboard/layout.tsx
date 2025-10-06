@@ -15,9 +15,9 @@ import "../globals.css";
 });
 
 export const metadata: Metadata = {
-  title: "Libre Scraping",
+  title: "C.R.E. Insight",
   description: "Aplicación para visualizar publicaciones de perfiles de Facebook extraídas automáticamente.",
-  keywords: ["libre scraping", "scraping", "facebook", "publicaciones", "perfiles", "automático"],
+  keywords: ["C.R.E. Insight", "scraping", "facebook", "publicaciones", "perfiles", "automático"],
   authors: [{ name: "Other Mind" }]
 };
 
@@ -49,7 +49,9 @@ export default async function DashboardLayout({
   const user = {
     name: typeof session.username === "string" ? session.username : "Usuario",
     email: typeof session.email === "string" ? session.email : "",
-    avatar: "/avatars/default.jpg", // Si tienes avatar en DB, cámbialo aquí
+    avatar: typeof session.avatar === "string" && session.avatar.length > 0
+      ? session.avatar
+      : "/avatars/default.jpg",
   };
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>

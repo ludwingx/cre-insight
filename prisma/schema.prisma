@@ -3,44 +3,59 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
 }
 
 model User {
-  id             String    @id @default(cuid())
-  nombreCompleto String
-  email          String    @unique
-  passwordHash   String
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  // Relación opcional: si un usuario registra/gestiona posts
-  posts          Post[]
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  role      String   @default("user") // admin, user, analyst
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Post {
-  id_publicacion String   @id
-  pagina         String
-  fecha          DateTime
-  timestamp      BigInt
-  texto          String?
-  enlaceExterno  String?
-  meGusta        Int      @default(0)
-  compartidos    Int      @default(0)
-  reacciones     Int      @default(0)
-  hashtags       String[] // PostgreSQL soporta arrays
-  tieneImagen    Boolean  @default(false)
-  urlImagen      String?
-  textoOcr       String?
-  urlPublicacion String
-  urlFacebook    String?
-  feedbackId     String?
+  id               Int       @id @default(autoincrement())
+  id_publicacion   String    @unique
+  plataforma       String
+  fecha            DateTime
+  timestamp        String
+  texto            String
+  me_gusta         Int
+  comentarios      Int
+  compartidos      Int
+  hashtags         String[]  // guardaremos como array nativo de Postgres
+  tiene_imagen     Boolean   @default(false)
+  url_imagen       String?
+  url_publicacion  String
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  metrics          PostMetrics[]
+}
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
 
-  // Relación con usuario (opcional)
-  userId         String?
-  user           User?    @relation(fields: [userId], references: [id])
+model PostMetrics {
+  id          Int      @id @default(autoincrement())
+  postId      Int
+  post        Post     @relation(fields: [postId], references: [id])
+  likes       Int      @default(0)
+  comments    Int      @default(0)
+  shares      Int      @default(0)
+  views       Int?     // opcional: depende de la red
+  collectedAt DateTime @default(now()) // snapshot histórico
+}
+
+model Mention {
+  id               Int      @id @default(autoincrement())
+  sourceName       String   // nombre del perfil o grupo que menciona
+  sourceUrl        String   // enlace al perfil/grupo/post
+  platform         String   // Facebook, Instagram, TikTok
+  content          String
+  mentionUrl       String   @unique
+  sentiment        String?  // positivo, negativo, neutro
+  publishedAt      DateTime
+  collectedAt      DateTime @default(now())
 }

@@ -29,7 +29,7 @@ export function LoginForm({
 
   return (
     <div className={cn("w-full", className)} {...props}>
-      <Card className="overflow-hidden border-0 shadow-xl w-full">
+      <Card className="overflow-hidden w-full ">
         <CardContent className="p-0">
           <div className="flex flex-col">
             {/* Form Section */}
@@ -108,3 +108,4 @@ export function LoginForm({
     </div>
   )
 }
+
