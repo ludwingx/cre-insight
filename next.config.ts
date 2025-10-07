@@ -15,7 +15,17 @@ const nextConfig: NextConfig = {
       "placeholder.com",
       'scontent.fgyd3-1.fna.fbcdn.net',
       'scontent.xx.fbcdn.net',
-      'scontent.fbcb2-2.fna.fbcdn.net', 
+      'scontent.fbcb2-2.fna.fbcdn.net',
+      'scontent-atl3-3.xx.fbcdn.net',
+      'scontent-atl3-1.xx.fbcdn.net',
+      'scontent-atl3-2.xx.fbcdn.net',
+      'platform-lookaside.fbsbx.com',
+    ],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
     ],
   },
 };

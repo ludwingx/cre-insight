@@ -16,6 +16,7 @@ export async function GET() {
         comentarios: true,
         compartidos: true,
         url_imagen: true,
+        url_publicacion: true,
         // Si tienes comentarios en metrics, puedes agregarlos aquí
       },
     });
@@ -30,6 +31,7 @@ export async function GET() {
       comentarios: post.comentarios,
       compartidos: post.compartidos,
       url_imagen: post.url_imagen,
+      url_publicacion: post.url_publicacion,
     }));
     console.log("POSTS RAW:", postsRaw); // <--- Aquí el log
     return NextResponse.json({ posts });

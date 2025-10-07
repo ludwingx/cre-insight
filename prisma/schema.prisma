@@ -31,6 +31,7 @@ model Post {
   tiene_imagen     Boolean   @default(false)
   url_imagen       String?
   url_publicacion  String
+  seguimiento      Boolean   @default(true)  
   created_at       DateTime  @default(now())
   updated_at       DateTime  @updatedAt
   metrics          PostMetrics[]
