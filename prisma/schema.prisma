@@ -20,33 +20,40 @@ model User {
 model Post {
   id               Int       @id @default(autoincrement())
   id_publicacion   String    @unique
-  plataforma       String
+  plataforma       String    @default("facebook")
   fecha            DateTime
-  timestamp        String
-  texto            String
-  me_gusta         Int
-  comentarios      Int
-  compartidos      Int
-  hashtags         String[]  // guardaremos como array nativo de Postgres
+  timestamp        BigInt?   // Cambié a BigInt para timestamps grandes
+  texto            String    @db.Text // Mejor para textos largos
+  me_gusta         Int       @default(0)
+  comentarios      Int       @default(0)
+  compartidos      Int       @default(0)
+  hashtags         String[]  
   tiene_imagen     Boolean   @default(false)
-  url_imagen       String?
-  url_publicacion  String
-  seguimiento      Boolean   @default(true)  
+  image_base64     String?   @db.Text // Almacena la imagen en formato base64
+  url_publicacion  String    @db.Text
+  seguimiento      Boolean   @default(true)
+  tipoContenido    String    @default("imagen")// video, imagen o texto
+  vistas           Int       @default(0)
   created_at       DateTime  @default(now())
   updated_at       DateTime  @updatedAt
   metrics          PostMetrics[]
 }
 
-
 model PostMetrics {
   id          Int      @id @default(autoincrement())
   postId      Int
-  post        Post     @relation(fields: [postId], references: [id])
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   likes       Int      @default(0)
   comments    Int      @default(0)
   shares      Int      @default(0)
-  views       Int?     // opcional: depende de la red
-  collectedAt DateTime @default(now()) // snapshot histórico
+  views       Int?     @default(0) // Mantener opcional
+  collectedAt DateTime @default(now())
+  totalInteracciones Int? @default(0) // likes + comments + shares
+  engagementRate     Float? // Porcentaje de engagement
+  tipoContenido      String? @default("imagen") // Para tracking histórico
+  
+  @@index([postId, collectedAt])
+  @@map("post_metrics") // Opcional: nombre explícito
 }
 
 model Mention {
