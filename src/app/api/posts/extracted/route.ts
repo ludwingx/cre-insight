@@ -22,6 +22,8 @@ export async function GET() {
         image_base64: true,
         url_publicacion: true,
         seguimiento: true,
+        tipoContenido: true,
+        vistas: true,
       },
     });
     // Mapeo para PostTable
@@ -36,7 +38,9 @@ export async function GET() {
       compartidos: post.compartidos,
       url_imagen: post.image_base64,
       url_publicacion: post.url_publicacion,
-      seguimiento: post.seguimiento
+      seguimiento: post.seguimiento,
+      tipoContenido: post.tipoContenido,
+      vistas: post.vistas
     }));
     console.log("POSTS RAW:", postsRaw); // <--- Aquí el log
     return NextResponse.json({ posts });

@@ -4,14 +4,10 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Play, Image as ImageIcon, Facebook, Instagram } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 type Post = {
   id: number
@@ -22,6 +18,8 @@ type Post = {
   likes: number
   comentarios: number
   compartidos: number
+  vistas: number
+  tipoContenido: string
   url_publicacion?: string
   url_imagen?: string
   seguimiento: boolean
@@ -56,24 +54,74 @@ export function PostTable({ posts }: { posts: Post[] }) {
 
   return (
     <div className="overflow-x-auto">
-      <Table>
+      <Table className="[&_tr]:h-auto [&_td]:align-top">
         <TableHeader>
           <TableRow>
+          <TableHead className="text-center">Red Social</TableHead>
+          <TableHead className="text-center">Tipo</TableHead>
+          <TableHead className="text-center">Fecha</TableHead>
             <TableHead>Imagen</TableHead>
-            <TableHead>ID Post</TableHead>
-            <TableHead>Red Social</TableHead>
-            <TableHead>Texto</TableHead>
-            <TableHead className="text-center">Fecha</TableHead>
+            {/* <TableHead>ID Post</TableHead> */}
+            <TableHead className="min-w-[300px]">Texto</TableHead>
             <TableHead className="text-center">Likes</TableHead>
             <TableHead className="text-center">Comentarios</TableHead>
             <TableHead className="text-center">Compartidos</TableHead>
+            <TableHead className="text-center">Vistas</TableHead>
             <TableHead className="text-center">Seguimiento</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
+            <TableHead className="text-center">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {postList.map((post) => (
             <TableRow key={post.id}>
+            <TableCell className="text-center">
+              <div className="flex justify-center">
+                <Badge variant="outline" className="gap-1">
+                  {post.redsocial.toLowerCase() === 'facebook' ? (
+                    <Facebook className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                  ) : post.redsocial.toLowerCase() === 'instagram' ? (
+                    <Instagram className="h-3 w-3 text-pink-600 dark:text-pink-400" />
+                  ) : (
+                    <span className="h-3 w-3 rounded-full bg-gray-300" />
+                  )}
+                  {post.redsocial}
+                </Badge>
+              </div>
+            </TableCell>
+            <TableCell className="text-center">
+              <div className="flex justify-center">
+                {post.tipoContenido === 'video' ? (
+                  <Badge variant="destructive" className="gap-1">
+                    <Play className="h-3 w-3" />
+                    Video
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="gap-1">
+                    <ImageIcon className="h-3 w-3" />
+                    Imagen
+                  </Badge>
+                )}
+              </div>
+            </TableCell>
+            
+            <TableCell className="text-center">
+                <div className="flex flex-col">
+                  <span className="whitespace-nowrap">
+                    {new Date(post.fechapublicacion).toLocaleDateString('es-BO', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit'
+                    })}
+                  </span>
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    {new Date(post.fechapublicacion).toLocaleTimeString('es-BO', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true
+                    })}
+                  </span>
+                </div>
+              </TableCell>
             <TableCell className="w-20">
               <div className="relative w-16 h-16">
                 {post.url_imagen && !imageErrors.has(post.id) ? (
@@ -105,16 +153,24 @@ export function PostTable({ posts }: { posts: Post[] }) {
                 )}
               </div>
               </TableCell>
-
-              <TableCell className="font-medium">{post.perfil}</TableCell>
-              <TableCell>{post.redsocial}</TableCell>
-              <TableCell className="max-w-[300px] truncate">{post.texto}</TableCell>
-              <TableCell className="text-center">
-                {new Date(post.fechapublicacion).toLocaleDateString()}
+              {/* <TableCell className="font-medium">{post.perfil}</TableCell> */}
+              <TableCell className="whitespace-normal py-4">
+                <div className="pr-2">
+                  {post.texto}
+                </div>
               </TableCell>
               <TableCell className="text-center">{post.likes}</TableCell>
               <TableCell className="text-center">{post.comentarios}</TableCell>
               <TableCell className="text-center">{post.compartidos}</TableCell>
+              <TableCell className="text-center">
+                {post.vistas > 0 ? (
+                  <span className="font-medium">
+                    {post.vistas.toLocaleString()}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">-</span>
+                )}
+              </TableCell>
 
               <TableCell className="text-center">
                 <div className="flex justify-center">
