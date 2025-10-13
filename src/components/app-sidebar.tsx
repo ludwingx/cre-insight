@@ -19,7 +19,6 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-
 const data = {
   user: {
     name: "Equipo C.R.E.",
@@ -50,8 +49,8 @@ const data = {
       url: "/reputation",
       icon: AlertTriangle,
       items: [
-        { title: "Negativas", url: "/reputation/negatives" },
-        { title: "Tendencias", url: "/reputation/trends" },
+        { title: "Negativas", url: "/dashboard/reputation/negatives" },
+        { title: "Tendencias", url: "/dashboard/reputation/trends" },
       ],
     },
     {
@@ -83,12 +82,12 @@ export function AppSidebar({
 }) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <div className="flex items-center gap-2 px-2">
-          <BarChart3 className="w-6 h-6 text-primary" />
-          <span className="font-semibold text-base tracking-wide">
-            C.R.E. Insights
-          </span>
+<SidebarHeader className="p-2">
+        <div className="flex items-center">
+          <div className="flex items-center justify-center w-10 h-10 rounded-md bg-primary/10 text-primary">
+            <BarChart3 className="w-6 h-6" />
+          </div>
+         
         </div>
       </SidebarHeader>
       <SidebarContent>

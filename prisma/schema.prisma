@@ -60,10 +60,12 @@ model Mention {
   id               Int      @id @default(autoincrement())
   sourceName       String   // nombre del perfil o grupo que menciona
   sourceUrl        String   // enlace al perfil/grupo/post
+  image_base64     String?   @db.Text // Almacena la imagen en formato base64
   platform         String   // Facebook, Instagram, TikTok
   content          String
   mentionUrl       String   @unique
-  sentiment        String?  // positivo, negativo, neutro
+  razon_especifica String?  // "Crítica en grupo Facebook", "Posible falso positivo", etc.
+  comentario_principal String? // "Cre ladrones", "Contenido no relacionado", etc.
   publishedAt      DateTime
   collectedAt      DateTime @default(now())
 }
