@@ -17,7 +17,7 @@ export default async function Home() {
 
         {/* Títulos */}
         <h1 className="text-3xl md:text-5xl font-extrabold text-[#2c5d5a] mb-2 tracking-tight text-center">
-          Bienvenido a <span className="text-gray-900">C.R.E. Insights</span>
+          Bienvenido a <span className="text-gray-900">C.R.E. Insightss</span>
         </h1>
         <h2 className="text-sm md:text-lg text-gray-600 mb-6 font-medium text-center">
           Plataforma para <span className="text-[#2c5d5a] font-semibold">monitorear</span>,{" "}

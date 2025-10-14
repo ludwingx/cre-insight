@@ -126,36 +126,35 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
   }, [mentions]);
 
   return (
-    <div className="overflow-x-auto">
-      <Table className="[&_tr]:h-auto [&_td]:align-top">
+      <Table className="[&_tr]:h-auto">
         <TableHeader>
           <TableRow>
-            <TableHead className="text-center">Plataforma</TableHead>
-            <TableHead className="text-center">Fuente</TableHead>
-            <TableHead className="text-center">Fecha</TableHead>
-            <TableHead>Imagen</TableHead>
-            <TableHead className="min-w-[200px]">Contenido</TableHead>
-            <TableHead className="min-w-[150px]">Razón Específica</TableHead>
-            <TableHead className="min-w-[150px]">Comentario Principal</TableHead>
-            <TableHead className="text-center">Acciones</TableHead>
+            <TableHead className="text-center align-middle">Plataforma</TableHead>
+            <TableHead className="text-center align-middle">Fuente</TableHead>
+            <TableHead className="text-center align-middle">Fecha</TableHead>
+            <TableHead className="text-center align-middle">Imagen</TableHead>
+            <TableHead className="text-center align-middle min-w-[200px]">Contenido</TableHead>
+            <TableHead className="text-center align-middle min-w-[150px]">Razón Específica</TableHead>
+            <TableHead className="text-center align-middle min-w-[150px]">Comentario Principal</TableHead>
+            <TableHead className="text-center align-middle">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {mentions.map((mention) => (
             <TableRow key={mention.id}>
-              <TableCell className="text-center">
+              <TableCell className="text-center align-middle">
                 <div className="flex justify-center">
                   {getPlatformIcon(mention.platform)}
                 </div>
               </TableCell>
-              <TableCell className="text-center">
-                <div className="flex flex-col items-center">
+              <TableCell className="text-center align-middle">
+                <div className="flex flex-col items-center justify-center h-full">
                   <span className="text-sm font-medium">{mention.sourceName}</span>
                   {mention.sourceUrl && (
                     <Link 
                       href={mention.sourceUrl} 
                       target="_blank"
-                      className="text-xs text-blue-500 hover:underline"
+                      className="text-xs text-blue-500 hover:underline mt-1"
                       onClick={(e) => e.stopPropagation()}
                     >
                       Ver perfil
@@ -164,8 +163,8 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
                 </div>
               </TableCell>
             
-              <TableCell className="text-center">
-                <div className="flex flex-col">
+              <TableCell className="text-center align-middle">
+                <div className="flex flex-col items-center justify-center h-full">
                   <span className="whitespace-nowrap">
                     {new Date(mention.publishedAt).toLocaleDateString('es-BO', {
                       year: 'numeric',
@@ -182,8 +181,8 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
                   </span>
                 </div>
               </TableCell>
-              <TableCell className="w-20">
-                <div className="relative w-16 h-16">
+              <TableCell className="w-20 align-middle">
+                <div className="relative w-16 h-16 mx-auto">
                   {isValidBase64Image(mention.image_base64) ? (
                     <div className="relative w-full h-full">
                       <img
@@ -215,30 +214,36 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
                   )}
                 </div>
               </TableCell>
-              <TableCell className="whitespace-normal py-4">
-                <div className="pr-2 line-clamp-3">
+              <TableCell className="whitespace-normal align-middle">
+                <div className="px-2 line-clamp-3 text-center">
                   {mention.content}
                 </div>
-
               </TableCell>
-              <TableCell className="whitespace-normal py-4">
-                <div className="text-sm font-medium">
+              <TableCell className="whitespace-normal align-middle">
+                <div className="text-sm font-medium text-center">
                   {mention.razon_especifica || '-'}
                 </div>
               </TableCell>
-              <TableCell className="whitespace-normal py-4">
-                {mention.comentario_principal ? (
-                  <div className="text-sm text-gray-600 italic">
-                    "{mention.comentario_principal}"
-                  </div>
-                ) : (
-                  <span className="text-sm text-gray-400">-</span>
-                )}
+              <TableCell className="whitespace-normal align-middle">
+                <div className="px-2">
+                  {mention.comentario_principal ? (
+                    <div className="text-sm text-gray-600 italic text-center">
+                      "{mention.comentario_principal}"
+                    </div>
+                  ) : (
+                    <span className="text-sm text-gray-400 text-center block">-</span>
+                  )}
+                </div>
               </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Link href={mention.mentionUrl} target="_blank"  className="text-blue-500 hover:underline" rel="noopener noreferrer">
-                  Ver post
+              <TableCell className="align-middle">
+                <div className="flex justify-center gap-2">
+                  <Link 
+                    href={mention.mentionUrl} 
+                    target="_blank"  
+                    className="text-blue-500 hover:underline whitespace-nowrap" 
+                    rel="noopener noreferrer"
+                  >
+                    Ver post
                   </Link>
                 </div>
               </TableCell>
@@ -246,6 +251,5 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
           ))}
         </TableBody>
       </Table>
-    </div>
   )
 }

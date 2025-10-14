@@ -1,102 +1,85 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import {
-  LayoutDashboard,
-  Database,
-  AlertTriangle,
-  BarChart3,
-  Settings2,
-  Bot,
-} from "lucide-react"
+import * as React from "react";
+import { LayoutDashboard, Database, AlertTriangle, GalleryVerticalEnd } from "lucide-react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from "@/components/ui/sidebar";
+import { TeamSwitcher } from "./team-switcher";
+
 const data = {
   user: {
     name: "Equipo C.R.E.",
     email: "admin@cre-insights.com",
     avatar: "/avatars/cre-logo.png",
   },
-  navMain: [
+  teams: [
+    {
+      name: "C.R.E.",
+      logo: GalleryVerticalEnd,
+      plan: "Insights",
+    },
+  ],
+  navItems: [
     {
       title: "Dashboard",
-      url: "/dashboard",
+      url: "/dashboard/overview",
       icon: LayoutDashboard,
-      items: [
-        { title: "Resumen general", url: "/dashboard/overview" },
-        { title: "Métricas", url: "/dashboard/metrics" },
-      ],
     },
     {
       title: "Publicaciones",
-      url: "/posts",
+      url: "/dashboard/posts/extracted",
       icon: Database,
-      items: [
-        { title: "Extraídas", url: "/dashboard/posts/extracted" },
-        { title: "Monitoreo", url: "/dashboard/posts/monitor" },
-      ],
     },
     {
       title: "Reputación",
-      url: "/reputation",
+      url: "/dashboard/reputation/negatives",
       icon: AlertTriangle,
-      items: [
-        { title: "Negativas", url: "/dashboard/reputation/negatives" },
-        { title: "Tendencias", url: "/dashboard/reputation/trends" },
-      ],
-    },
-    {
-      title: "Automatización",
-      url: "/automation",
-      icon: Bot,
-      items: [
-        { title: "Scraping", url: "/automation/scraping" },
-        { title: "Historial", url: "/automation/history" },
-      ],
-    },
-    {
-      title: "Configuraciones",
-      url: "/settings",
-      icon: Settings2,
-      items: [
-        { title: "Preferencias", url: "/settings/preferences" },
-        { title: "Usuarios", url: "/settings/users" },
-      ],
     },
   ],
-}
+};
 
 export function AppSidebar({
   user,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
-  user?: { name: string; email: string; avatar: string }
+  user?: { name: string; email: string; avatar: string };
 }) {
   return (
     <Sidebar collapsible="icon" {...props}>
-<SidebarHeader className="p-2">
-        <div className="flex items-center">
-          <div className="flex items-center justify-center w-10 h-10 rounded-md bg-primary/10 text-primary">
-            <BarChart3 className="w-6 h-6" />
-          </div>
-         
-        </div>
+      <SidebarHeader>
+        <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
+
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <SidebarMenu>
+          {data.navItems.map((item) => (
+            <SidebarMenuItem key={item.url}>
+              <SidebarMenuButton asChild>
+                <a href={item.url} className="flex items-center gap-2">
+                  <item.icon className="w-4 h-4" />
+                  <span>{item.title}</span>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
       </SidebarContent>
+
       <SidebarFooter>
         <NavUser user={user || data.user} />
       </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

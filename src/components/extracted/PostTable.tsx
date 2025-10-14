@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Play, Image as ImageIcon, Facebook, Instagram } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { X } from "lucide-react"
 
 type Post = {
   id: number
@@ -24,24 +26,28 @@ type Post = {
   url_imagen?: string
   seguimiento: boolean
 }
+
 export function PostTable({ posts }: { posts: Post[] }) {
   const [postList, setPostList] = useState(posts)
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set())
   const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set())
+  const [selectedImage, setSelectedImage] = useState<{ url: string; alt: string } | null>(null)
 
   const handleImageError = (postId: number) => {
     console.log(`Error loading image for post ${postId}`)
     setImageErrors(prev => new Set(prev).add(postId))
   }
 
-  const handleImageLoad = (postId: number) => {
-    console.log(`Image loaded for post ${postId}`)
-    setLoadedImages(prev => new Set(prev).add(postId))
-    setImageErrors(prev => {
-      const newSet = new Set(prev)
-      newSet.delete(postId)
-      return newSet
-    })
+  const handleImageLoad = (id: number) => {
+    setLoadedImages((prev) => new Set(prev).add(id))
+  }
+
+  const openImageModal = (url: string, alt: string = '') => {
+    setSelectedImage({ url, alt })
+  }
+
+  const closeImageModal = () => {
+    setSelectedImage(null)
   }
 
   function handleSeguimientoChange(id: number, checked: boolean): void {
@@ -54,15 +60,40 @@ export function PostTable({ posts }: { posts: Post[] }) {
 
   return (
     <div className="overflow-x-auto">
-      <Table className="[&_tr]:h-auto [&_td]:align-top">
+      {/* Image Modal */}
+      <Dialog open={!!selectedImage} onOpenChange={(open) => !open && closeImageModal()}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-transparent border-none shadow-none">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Vista previa de imagen</DialogTitle>
+          </DialogHeader>
+          <div className="relative w-full h-full flex items-center justify-center">
+            <button
+              onClick={closeImageModal}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 focus:outline-none z-10"
+              aria-label="Cerrar"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            {selectedImage && (
+              <div className="max-w-full max-h-[80vh] flex items-center justify-center">
+                <img
+                  src={selectedImage.url}
+                  alt={selectedImage.alt || 'Imagen ampliada'}
+                  className="max-w-full max-h-[80vh] object-contain rounded-md"
+                />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Table className="w-full [&_tr]:h-auto [&_td]:align-middle">
         <TableHeader>
           <TableRow>
-          <TableHead className="text-center">Red Social</TableHead>
-          <TableHead className="text-center">Tipo</TableHead>
-          <TableHead className="text-center">Fecha</TableHead>
-            <TableHead>Imagen</TableHead>
-            {/* <TableHead>ID Post</TableHead> */}
-            <TableHead className="min-w-[300px]">Texto</TableHead>
+            <TableHead className="text-center">Red Social</TableHead>
+            <TableHead className="text-center">Tipo</TableHead>
+            <TableHead className="text-center">Fecha</TableHead>
+            <TableHead className="text-center">Imagen</TableHead>
+            <TableHead className="min-w-[300px] text-center">Texto</TableHead>
             <TableHead className="text-center">Likes</TableHead>
             <TableHead className="text-center">Comentarios</TableHead>
             <TableHead className="text-center">Compartidos</TableHead>
@@ -74,38 +105,42 @@ export function PostTable({ posts }: { posts: Post[] }) {
         <TableBody>
           {postList.map((post) => (
             <TableRow key={post.id}>
-            <TableCell className="text-center">
-              <div className="flex justify-center">
-                <Badge variant="outline" className="gap-1">
-                  {post.redsocial.toLowerCase() === 'facebook' ? (
-                    <Facebook className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                  ) : post.redsocial.toLowerCase() === 'instagram' ? (
-                    <Instagram className="h-3 w-3 text-pink-600 dark:text-pink-400" />
-                  ) : (
-                    <span className="h-3 w-3 rounded-full bg-gray-300" />
-                  )}
-                  {post.redsocial}
-                </Badge>
-              </div>
-            </TableCell>
-            <TableCell className="text-center">
-              <div className="flex justify-center">
-                {post.tipoContenido === 'video' ? (
-                  <Badge variant="destructive" className="gap-1">
-                    <Play className="h-3 w-3" />
-                    Video
-                  </Badge>
-                ) : (
+              {/* Red Social - Centrado */}
+              <TableCell className="text-center align-middle">
+                <div className="flex justify-center">
                   <Badge variant="outline" className="gap-1">
-                    <ImageIcon className="h-3 w-3" />
-                    Imagen
+                    {post.redsocial.toLowerCase() === 'facebook' ? (
+                      <Facebook className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                    ) : post.redsocial.toLowerCase() === 'instagram' ? (
+                      <Instagram className="h-3 w-3 text-pink-600 dark:text-pink-400" />
+                    ) : (
+                      <span className="h-3 w-3 rounded-full bg-gray-300" />
+                    )}
+                    {post.redsocial}
                   </Badge>
-                )}
-              </div>
-            </TableCell>
-            
-            <TableCell className="text-center">
-                <div className="flex flex-col">
+                </div>
+              </TableCell>
+
+              {/* Tipo - Centrado */}
+              <TableCell className="text-center align-middle">
+                <div className="flex justify-center">
+                  {post.tipoContenido === 'video' ? (
+                    <Badge variant="outline" className="gap-1">
+                      <Play className="h-3 w-3" />
+                      Video
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="gap-1">
+                      <ImageIcon className="h-3 w-3" />
+                      Imagen
+                    </Badge>
+                  )}
+                </div>
+              </TableCell>
+
+              {/* Fecha - Centrado */}
+              <TableCell className="text-center align-middle">
+                <div className="flex flex-col items-center justify-center">
                   <span className="whitespace-nowrap">
                     {new Date(post.fechapublicacion).toLocaleDateString('es-BO', {
                       year: 'numeric',
@@ -122,47 +157,72 @@ export function PostTable({ posts }: { posts: Post[] }) {
                   </span>
                 </div>
               </TableCell>
-            <TableCell className="w-20">
-              <div className="relative w-16 h-16">
-                {post.url_imagen && !imageErrors.has(post.id) ? (
-                  <>
-                    <img
-                      src={post.url_imagen}
-                      alt="Miniatura"
-                      className={`w-full h-full object-cover rounded-md transition-opacity duration-300 ${
-                        loadedImages.has(post.id) ? 'opacity-100' : 'opacity-0'
-                      }`}
-                      onError={() => handleImageError(post.id)}
-                      onLoad={() => handleImageLoad(post.id)}
-                      loading="lazy"
-                      crossOrigin="anonymous"
-                      referrerPolicy="no-referrer"
-                    />
-                    {!loadedImages.has(post.id) && !imageErrors.has(post.id) && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-md">
-                        <div className="animate-pulse w-full h-full bg-gray-200 rounded-md"></div>
+
+              {/* Imagen - Centrado */}
+              <TableCell className="text-center align-middle">
+                <div className="flex justify-center">
+                  <div className="relative w-16 h-16">
+                    {post.url_imagen && !imageErrors.has(post.id) ? (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (post.url_imagen) {
+                              openImageModal(post.url_imagen, `Imagen de ${post.redsocial}`)
+                            }
+                          }}
+                          className="w-full h-full hover:opacity-90 transition-opacity"
+                          aria-label="Ver imagen en grande"
+                          disabled={!post.url_imagen}
+                        >
+                          <img
+                            src={post.url_imagen}
+                            alt="Miniatura"
+                            className={`w-full h-full object-cover rounded-md transition-opacity duration-300 ${
+                              loadedImages.has(post.id) ? 'opacity-100' : 'opacity-0'
+                            }`}
+                            onError={() => handleImageError(post.id)}
+                            onLoad={() => handleImageLoad(post.id)}
+                            loading="lazy"
+                            crossOrigin="anonymous"
+                            referrerPolicy="no-referrer"
+                          />
+                        </button>
+                        {!loadedImages.has(post.id) && !imageErrors.has(post.id) && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-md">
+                            <div className="animate-pulse w-full h-full bg-gray-200 rounded-md"></div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-md text-gray-400">
+                        <span className="text-xs text-center">
+                          {post.url_imagen ? 'Error' : 'Sin imagen'}
+                        </span>
                       </div>
                     )}
-                  </>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-md text-gray-400">
-                    <span className="text-xs text-center">
-                      {post.url_imagen ? 'Error' : 'Sin imagen'}
-                    </span>
                   </div>
-                )}
-              </div>
+                </div>
               </TableCell>
-              {/* <TableCell className="font-medium">{post.perfil}</TableCell> */}
-              <TableCell className="whitespace-normal py-4">
+
+              {/* Texto - NO Centrado (mantiene alineación por defecto) */}
+              <TableCell className="whitespace-normal py-4 align-top">
                 <div className="pr-2">
                   {post.texto}
                 </div>
               </TableCell>
-              <TableCell className="text-center">{post.likes}</TableCell>
-              <TableCell className="text-center">{post.comentarios}</TableCell>
-              <TableCell className="text-center">{post.compartidos}</TableCell>
-              <TableCell className="text-center">
+
+              {/* Likes - Centrado */}
+              <TableCell className="text-center align-middle">{post.likes}</TableCell>
+
+              {/* Comentarios - Centrado */}
+              <TableCell className="text-center align-middle">{post.comentarios}</TableCell>
+
+              {/* Compartidos - Centrado */}
+              <TableCell className="text-center align-middle">{post.compartidos}</TableCell>
+
+              {/* Vistas - Centrado */}
+              <TableCell className="text-center align-middle">
                 {post.vistas > 0 ? (
                   <span className="font-medium">
                     {post.vistas.toLocaleString()}
@@ -172,20 +232,22 @@ export function PostTable({ posts }: { posts: Post[] }) {
                 )}
               </TableCell>
 
-              <TableCell className="text-center">
+              {/* Seguimiento - Centrado */}
+              <TableCell className="text-center align-middle">
                 <div className="flex justify-center">
                   <Switch
                     checked={post.seguimiento}
                     onCheckedChange={(checked) =>
                       handleSeguimientoChange(post.id, checked)
                     }
-                    className="data-[state=checked]:bg-blue-500"
+                    className="data-[state=checked]:bg-blue-500 cursor-pointer"
                   />
                 </div>
               </TableCell>
 
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
+              {/* Acciones - Centrado */}
+              <TableCell className="text-center align-middle">
+                <div className="flex justify-center gap-2">
                   {post.url_publicacion ? (
                     <Link
                       href={post.url_publicacion}

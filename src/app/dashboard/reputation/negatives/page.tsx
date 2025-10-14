@@ -1,42 +1,51 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { RefreshCw } from "lucide-react"
-import { MentionsTable, type Mention } from "@/components/reputation/MentionsTable"
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Separator } from "@radix-ui/react-separator"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+import {
+  MentionsTable,
+  type Mention,
+} from "@/components/reputation/MentionsTable";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@radix-ui/react-separator";
 
 export default function NegativesPage() {
-  const [mentions, setMentions] = useState<Mention[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [mentions, setMentions] = useState<Mention[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const fetchMentions = async () => {
     try {
-      setLoading(true)
-      setError(null)
-      const response = await fetch('/api/mentions')
-      
+      setLoading(true);
+      setError(null);
+      const response = await fetch("/api/mentions");
+
       if (!response.ok) {
-        throw new Error('Error al cargar las menciones')
+        throw new Error("Error al cargar las menciones");
       }
-      
-      const data = await response.json()
-      setMentions(data)
+
+      const data = await response.json();
+      setMentions(data);
     } catch (err) {
-      console.error('Error fetching mentions:', err)
-      setError('Error al cargar las menciones. Por favor, intente nuevamente.')
+      console.error("Error fetching mentions:", err);
+      setError("Error al cargar las menciones. Por favor, intente nuevamente.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchMentions()
-  }, [])
+    fetchMentions();
+  }, []);
 
   const filteredMentions = [...mentions]; // Create a copy of the mentions array
 
@@ -68,63 +77,70 @@ export default function NegativesPage() {
           </div>
         </div>
       </header>
-
-    <div className="space-y-6 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
-      <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between bg-background p-4 rounded-lg border">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Menciones</h1>
-          <p className="text-muted-foreground text-sm">
-            Monitorea las menciones de tu marca en redes sociales
-          </p>
+      <div className="space-y-6 p-4 sm:p-6 lg:p-8 max-w-[2000px] mx-auto w-full">
+        {/* Header Section */}
+        <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between bg-background p-4 sm:p-6 rounded-lg">
+          <div className="space-y-1">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+              Menciones Negativas
+            </h1>
+            <p className="text-muted-foreground text-xs sm:text-sm">
+              Monitorea las menciones negativas de C.R.E. SL
+            </p>
+          </div>
+          <div className="flex-shrink-0 w-full sm:w-auto mt-3 sm:mt-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchMentions}
+              disabled={loading}
+              className="w-full sm:w-auto"
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+              />
+              {loading ? "Cargando..." : "Actualizar"}
+            </Button>
+          </div>
         </div>
-        <div className="flex-shrink-0">
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={fetchMentions}
-            disabled={loading}
-            className="w-full sm:w-auto"
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? 'Cargando...' : 'Actualizar'}
-          </Button>
+
+        {/* Content Section */}
+        <div className="bg-card rounded-lg border overflow-hidden">
+          {/* Table Content */}
+          <div className="overflow-x-auto">
+            {error ? (
+              <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center">
+                <p className="text-red-500 mb-4 text-sm sm:text-base">
+                  {error}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchMentions}
+                  disabled={loading}
+                  className="mt-2"
+                >
+                  <RefreshCw
+                    className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                  />
+                  Reintentar
+                </Button>
+              </div>
+            ) : loading && mentions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-8 sm:p-12">
+                <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground mb-3" />
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Cargando menciones...
+                </p>
+              </div>
+            ) : (
+              <div className="min-w-[800px] sm:min-w-0">
+                <MentionsTable initialMentions={filteredMentions} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
-      <Card className="overflow-hidden">
-        <CardHeader className="bg-muted/20 px-6 py-4 border-b">
-          <div className="flex flex-col space-y-2 md:space-y-0 md:flex-row md:items-center md:justify-between">
-            <div>
-              <CardTitle className="text-lg font-semibold">Menciones de la marca</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                {mentions.length} {mentions.length === 1 ? 'mención encontrada' : 'menciones encontradas'}
-              </p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {error ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-red-500 mb-4">{error}</p>
-              <Button 
-                variant="outline" 
-                onClick={fetchMentions}
-                disabled={loading}
-              >
-                Reintentar
-              </Button>
-            </div>
-          ) : loading && mentions.length === 0 ? (
-            <div className="flex items-center justify-center py-12">
-              <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-              <span className="ml-2">Cargando menciones...</span>
-            </div>
-          ) : (
-            <MentionsTable initialMentions={filteredMentions} />
-          )}
-        </CardContent>
-      </Card>
     </div>
-    </div>
-  )
+  );
 }

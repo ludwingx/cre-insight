@@ -15,9 +15,9 @@ import { Toaster } from "sonner";
 });
 
 export const metadata: Metadata = {
-  title: "C.R.E. Insight",
+  title: "C.R.E. Insights",
   description: "Aplicación para visualizar publicaciones de perfiles de Facebook extraídas automáticamente.",
-  keywords: ["C.R.E. Insight", "scraping", "facebook", "publicaciones", "perfiles", "automático"],
+  keywords: ["C.R.E. Insights", "scraping", "facebook", "publicaciones", "perfiles", "automático"],
   authors: [{ name: "Other Mind" }]
 };
 
