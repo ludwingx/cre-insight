@@ -15,9 +15,9 @@ import "../globals.css";
 });
 
 export const metadata: Metadata = {
-  title: "C.R.E. Insights",
+  title: "C.R.E. Insight",
   description: "Aplicación para visualizar publicaciones de perfiles de Facebook extraídas automáticamente.",
-  keywords: ["C.R.E. Insights", "scraping", "facebook", "publicaciones", "perfiles", "automático"],
+  keywords: ["C.R.E. Insight", "scraping", "facebook", "publicaciones", "perfiles", "automático"],
   authors: [{ name: "Other Mind" }]
 };
 
@@ -61,7 +61,7 @@ export default async function DashboardLayout({
           {children}
         </SidebarInset>
       </SidebarProvider>
-      <Toaster position="bottom-right" richColors />
+      <Toaster position="top-center" richColors />
     </ThemeProvider>
   );
 }

@@ -60,6 +60,7 @@ export function PostTable({ posts }: { posts: Post[] }) {
 
   return (
     <div className="overflow-x-auto">
+      <div className="min-w-[900px] md:min-w-0">
       {/* Image Modal */}
       <Dialog open={!!selectedImage} onOpenChange={(open) => !open && closeImageModal()}>
         <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-transparent border-none shadow-none">
@@ -86,19 +87,19 @@ export function PostTable({ posts }: { posts: Post[] }) {
           </div>
         </DialogContent>
       </Dialog>
-      <Table className="w-full [&_tr]:h-auto [&_td]:align-middle">
+      <Table className="w-full [&_tr]:h-auto [&_td]:align-middle text-xs sm:text-sm">
         <TableHeader>
           <TableRow>
             <TableHead className="text-center">Red Social</TableHead>
             <TableHead className="text-center">Tipo</TableHead>
             <TableHead className="text-center">Fecha</TableHead>
             <TableHead className="text-center">Imagen</TableHead>
-            <TableHead className="min-w-[300px] text-center">Texto</TableHead>
-            <TableHead className="text-center">Likes</TableHead>
-            <TableHead className="text-center">Comentarios</TableHead>
-            <TableHead className="text-center">Compartidos</TableHead>
-            <TableHead className="text-center">Vistas</TableHead>
-            <TableHead className="text-center">Seguimiento</TableHead>
+            <TableHead className="min-w-[200px] md:min-w-[300px] text-center">Texto</TableHead>
+            <TableHead className="text-center hidden sm:table-cell">Likes</TableHead>
+            <TableHead className="text-center hidden md:table-cell">Comentarios</TableHead>
+            <TableHead className="text-center hidden lg:table-cell">Compartidos</TableHead>
+            <TableHead className="text-center hidden xl:table-cell">Vistas</TableHead>
+            <TableHead className="text-center hidden sm:table-cell">Seguimiento</TableHead>
             <TableHead className="text-center">Acciones</TableHead>
           </TableRow>
         </TableHeader>
@@ -283,6 +284,7 @@ export function PostTable({ posts }: { posts: Post[] }) {
           ))}
         </TableBody>
       </Table>
+      </div>
     </div>
   )
 }

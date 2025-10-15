@@ -45,6 +45,11 @@ const data = {
       url: "/dashboard/reputation/negatives",
       icon: AlertTriangle,
     },
+    {
+      title: "Keywords",
+      url: "/dashboard/keywords",
+      icon: Database,
+    }
   ],
 };
 

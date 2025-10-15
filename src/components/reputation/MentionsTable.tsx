@@ -126,130 +126,134 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
   }, [mentions]);
 
   return (
-      <Table className="[&_tr]:h-auto">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="text-center align-middle">Plataforma</TableHead>
-            <TableHead className="text-center align-middle">Fuente</TableHead>
-            <TableHead className="text-center align-middle">Fecha</TableHead>
-            <TableHead className="text-center align-middle">Imagen</TableHead>
-            <TableHead className="text-center align-middle min-w-[200px]">Contenido</TableHead>
-            <TableHead className="text-center align-middle min-w-[150px]">Razón Específica</TableHead>
-            <TableHead className="text-center align-middle min-w-[150px]">Comentario Principal</TableHead>
-            <TableHead className="text-center align-middle">Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {mentions.map((mention) => (
-            <TableRow key={mention.id}>
-              <TableCell className="text-center align-middle">
-                <div className="flex justify-center">
-                  {getPlatformIcon(mention.platform)}
-                </div>
-              </TableCell>
-              <TableCell className="text-center align-middle">
-                <div className="flex flex-col items-center justify-center h-full">
-                  <span className="text-sm font-medium">{mention.sourceName}</span>
-                  {mention.sourceUrl && (
-                    <Link 
-                      href={mention.sourceUrl} 
-                      target="_blank"
-                      className="text-xs text-blue-500 hover:underline mt-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Ver perfil
-                    </Link>
-                  )}
-                </div>
-              </TableCell>
-            
-              <TableCell className="text-center align-middle">
-                <div className="flex flex-col items-center justify-center h-full">
-                  <span className="whitespace-nowrap">
-                    {new Date(mention.publishedAt).toLocaleDateString('es-BO', {
-                      year: 'numeric',
-                      month: '2-digit',
-                      day: '2-digit'
-                    })}
-                  </span>
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">
-                    {new Date(mention.publishedAt).toLocaleTimeString('es-BO', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true
-                    })}
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell className="w-20 align-middle">
-                <div className="relative w-16 h-16 mx-auto">
-                  {isValidBase64Image(mention.image_base64) ? (
-                    <div className="relative w-full h-full">
-                      <img
-                        src={formatImageUrl(mention.image_base64) || ''}
-                        alt={`Mencion de ${mention.sourceName}`}
-                        className="w-full h-full object-cover rounded-md"
-                        onError={(e) => {
-                          console.error('Error cargando imagen para mención:', mention.id, e);
-                          handleImageError(mention.id);
-                        }}
-                        onLoad={() => handleImageLoad(mention.id)}
-                      />
-                      {!loadedImages.has(mention.id) && !imageErrors.has(mention.id) && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-md">
-                          <div className="animate-pulse w-full h-full bg-gray-200 rounded-md"></div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-md text-gray-400">
-                      {mention.image_base64 ? (
-                        <span className="text-xs text-center p-2">
-                          Formato de imagen no válido
-                        </span>
-                      ) : (
-                        <ImageIcon className="h-5 w-5" />
-                      )}
-                    </div>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell className="whitespace-normal align-middle">
-                <div className="px-2 line-clamp-3 text-center">
-                  {mention.content}
-                </div>
-              </TableCell>
-              <TableCell className="whitespace-normal align-middle">
-                <div className="text-sm font-medium text-center">
-                  {mention.razon_especifica || '-'}
-                </div>
-              </TableCell>
-              <TableCell className="whitespace-normal align-middle">
-                <div className="px-2">
-                  {mention.comentario_principal ? (
-                    <div className="text-sm text-gray-600 italic text-center">
-                      "{mention.comentario_principal}"
-                    </div>
-                  ) : (
-                    <span className="text-sm text-gray-400 text-center block">-</span>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell className="align-middle">
-                <div className="flex justify-center gap-2">
-                  <Link 
-                    href={mention.mentionUrl} 
-                    target="_blank"  
-                    className="text-blue-500 hover:underline whitespace-nowrap" 
-                    rel="noopener noreferrer"
-                  >
-                    Ver post
-                  </Link>
-                </div>
-              </TableCell>
+    <div className="rounded-md border overflow-hidden">
+      <div className="min-w-[800px] md:min-w-0 overflow-x-auto">
+        <Table className="[&_tr]:h-auto">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-center align-middle">Plataforma</TableHead>
+              <TableHead className="text-center align-middle">Fuente</TableHead>
+              <TableHead className="text-center align-middle">Fecha</TableHead>
+              <TableHead className="text-center align-middle">Imagen</TableHead>
+              <TableHead className="text-center align-middle min-w-[200px]">Contenido</TableHead>
+              <TableHead className="text-center align-middle min-w-[150px]">Razón Específica</TableHead>
+              <TableHead className="text-center align-middle min-w-[150px]">Comentario Principal</TableHead>
+              <TableHead className="text-center align-middle">Acciones</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {mentions.map((mention) => (
+              <TableRow key={mention.id}>
+                <TableCell className="text-center align-middle">
+                  <div className="flex justify-center">
+                    {getPlatformIcon(mention.platform)}
+                  </div>
+                </TableCell>
+                <TableCell className="text-center align-middle">
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <span className="text-sm font-medium">{mention.sourceName}</span>
+                    {mention.sourceUrl && (
+                      <Link 
+                        href={mention.sourceUrl} 
+                        target="_blank"
+                        className="text-xs text-blue-500 hover:underline mt-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Ver perfil
+                      </Link>
+                    )}
+                  </div>
+                </TableCell>
+            
+                <TableCell className="text-center align-middle">
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <span className="whitespace-nowrap">
+                      {new Date(mention.publishedAt).toLocaleDateString('es-BO', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                      })}
+                    </span>
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      {new Date(mention.publishedAt).toLocaleTimeString('es-BO', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell className="w-20 align-middle">
+                  <div className="relative w-16 h-16 mx-auto">
+                    {isValidBase64Image(mention.image_base64) ? (
+                      <div className="relative w-full h-full">
+                        <img
+                          src={formatImageUrl(mention.image_base64) || ''}
+                          alt={`Mencion de ${mention.sourceName}`}
+                          className="w-full h-full object-cover rounded-md"
+                          onError={(e) => {
+                            console.error('Error cargando imagen para mención:', mention.id, e);
+                            handleImageError(mention.id);
+                          }}
+                          onLoad={() => handleImageLoad(mention.id)}
+                        />
+                        {!loadedImages.has(mention.id) && !imageErrors.has(mention.id) && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-md">
+                            <div className="animate-pulse w-full h-full bg-gray-200 rounded-md"></div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-md text-gray-400">
+                        {mention.image_base64 ? (
+                          <span className="text-xs text-center p-2">
+                            Formato de imagen no válido
+                          </span>
+                        ) : (
+                          <ImageIcon className="h-5 w-5" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="whitespace-normal align-middle">
+                  <div className="px-2 line-clamp-3 text-center">
+                    {mention.content}
+                  </div>
+                </TableCell>
+                <TableCell className="whitespace-normal align-middle">
+                  <div className="text-sm font-medium text-center">
+                    {mention.razon_especifica || '-'}
+                  </div>
+                </TableCell>
+                <TableCell className="whitespace-normal align-middle">
+                  <div className="px-2">
+                    {mention.comentario_principal ? (
+                      <div className="text-sm text-gray-600 italic text-center">
+                        "{mention.comentario_principal}"
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400 text-center block">-</span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="align-middle">
+                  <div className="flex justify-center gap-2">
+                    <Link 
+                      href={mention.mentionUrl} 
+                      target="_blank"  
+                      className="text-blue-500 hover:underline whitespace-nowrap" 
+                      rel="noopener noreferrer"
+                    >
+                      Ver post
+                    </Link>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
   )
 }

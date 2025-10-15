@@ -69,3 +69,11 @@ model Mention {
   publishedAt      DateTime
   collectedAt      DateTime @default(now())
 }
+
+model Keyword {
+  id        Int      @id @default(autoincrement())
+  palabra   String   @unique
+  activa    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
