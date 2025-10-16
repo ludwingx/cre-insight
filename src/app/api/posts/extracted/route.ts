@@ -9,7 +9,6 @@ export async function GET() {
   try {
     const postsRaw = await prisma.post.findMany({
       orderBy: { fecha: 'desc' },
-      take: 50,
       select: {
         id: true,
         id_publicacion: true,
@@ -42,7 +41,6 @@ export async function GET() {
       tipoContenido: post.tipoContenido,
       vistas: post.vistas
     }));
-    console.log("POSTS RAW:", postsRaw); // <--- Aquí el log
     return NextResponse.json({ posts });
   } catch (error) {
     return NextResponse.json({ error: 'Error fetching posts' }, { status: 500 });
@@ -95,7 +93,6 @@ export async function PATCH(
     });
 
   } catch (error) {
-    console.error('Error updating post seguimiento:', error);
     return NextResponse.json(
       { 
         success: false,

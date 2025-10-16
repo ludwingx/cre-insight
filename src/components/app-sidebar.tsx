@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { LayoutDashboard, Database, AlertTriangle, GalleryVerticalEnd } from "lucide-react";
+import { LayoutDashboard, Database, AlertTriangle, GalleryVerticalEnd, ClipboardType, BookImage } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
 import {
@@ -31,24 +31,24 @@ const data = {
   ],
   navItems: [
     {
-      title: "Dashboard",
+      title: "Panel Principal",
       url: "/dashboard/overview",
       icon: LayoutDashboard,
     },
     {
-      title: "Publicaciones",
+      title: "Seguimiento de Publicaciones",
       url: "/dashboard/posts/extracted",
-      icon: Database,
+      icon: BookImage,
     },
     {
-      title: "Reputación",
+      title: "Menciones Negativas",
       url: "/dashboard/reputation/negatives",
       icon: AlertTriangle,
     },
     {
-      title: "Keywords",
+      title: "Palabras Claves",
       url: "/dashboard/keywords",
-      icon: Database,
+      icon: ClipboardType,
     }
   ],
 };

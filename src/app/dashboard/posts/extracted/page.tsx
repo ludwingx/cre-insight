@@ -18,10 +18,8 @@ export default function ExtractedPostsPage() {
       setLoading(true)
       const res = await fetch("/api/posts/extracted")
       const data = await res.json()
-      console.log("DATA:", data)
       setPosts(data.posts)
     } catch (error) {
-      console.error("Error al cargar posts:", error)
     } finally {
       setLoading(false)
     }

@@ -69,12 +69,6 @@ export function LoginForm({
                   </div>
                   
                   <div className="space-y-1.5 sm:space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="password" className="text-sm sm:text-base text-gray-700">Contraseña</Label>
-                      <Link href="/forgot-password" className="text-xs sm:text-sm text-[#2c5d5a] hover:underline whitespace-nowrap ml-2">
-                        ¿Olvidaste tu contraseña?
-                      </Link>
-                    </div>
                     <Input 
                       id="password"
                       name="password"
@@ -88,7 +82,7 @@ export function LoginForm({
                   <Button 
                     type="submit" 
                     disabled={pending}
-                    className="w-full bg-[#2c5d5a] hover:bg-[#244a48] text-white py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-medium transition-colors duration-300 disabled:opacity-70"
+                    className="w-full cursor-pointer bg-[#2c5d5a] hover:bg-[#244a48] text-white py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-medium transition-colors duration-300 disabled:opacity-70"
                   >
                     {pending ? 'Iniciando sesión...' : 'Iniciar sesión'}
                   </Button>
