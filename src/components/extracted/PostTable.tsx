@@ -5,14 +5,15 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Play, Image as ImageIcon, Facebook, Instagram } from "lucide-react"
+import { Play, ImageIcon, Facebook, Instagram, Share2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { X } from "lucide-react"
+import React from "react"
 
-type Post = {
-  id: number
+export type Post = {
+  id: string
   perfil: string
   redsocial: string
   texto: string
@@ -20,25 +21,30 @@ type Post = {
   likes: number
   comentarios: number
   compartidos: number
-  vistas: number
-  tipoContenido: string
-  url_publicacion?: string
-  url_imagen?: string
+  url_imagen: string | null
+  url_publicacion: string
   seguimiento: boolean
+  tipoContenido: string
+  vistas: number
 }
 
 export function PostTable({ posts }: { posts: Post[] }) {
-  const [postList, setPostList] = useState(posts)
-  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set())
-  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set())
+  const [postList, setPostList] = useState<Post[]>([])
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
   const [selectedImage, setSelectedImage] = useState<{ url: string; alt: string } | null>(null)
 
-  const handleImageError = (postId: number) => {
+  // Update postList when posts prop changes
+  React.useEffect(() => {
+    setPostList(posts)
+  }, [posts])
+
+  const handleImageError = (postId: string) => {
     console.log(`Error loading image for post ${postId}`)
     setImageErrors(prev => new Set(prev).add(postId))
   }
 
-  const handleImageLoad = (id: number) => {
+  const handleImageLoad = (id: string) => {
     setLoadedImages((prev) => new Set(prev).add(id))
   }
 
@@ -50,12 +56,52 @@ export function PostTable({ posts }: { posts: Post[] }) {
     setSelectedImage(null)
   }
 
-  function handleSeguimientoChange(id: number, checked: boolean): void {
+  async function handleSeguimientoChange(id: string, checked: boolean): Promise<void> {
+    // Optimistic update
     setPostList((prev) =>
       prev.map((post) =>
         post.id === id ? { ...post, seguimiento: checked } : post
       )
-    )
+    );
+
+    try {
+      const response = await fetch(`/api/posts/${id}/seguimiento`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ seguimiento: checked }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+          url: response.url
+        });
+        throw new Error(errorData.error || 'Failed to update seguimiento status');
+      }
+
+      // Update local state with the server response
+      const updatedPost = await response.json();
+      setPostList(prev => prev.map(post => 
+        post.id === id ? { ...post, seguimiento: updatedPost.seguimiento } : post
+      ));
+
+    } catch (error) {
+      console.error('Error updating seguimiento:', error);
+      // Revert on error
+      setPostList((prev) =>
+        prev.map((post) =>
+          post.id === id ? { ...post, seguimiento: !checked } : post
+        )
+      );
+      
+      // Show error message to the user
+      alert(`Error al actualizar el estado de seguimiento: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    }
   }
 
   return (
@@ -129,6 +175,11 @@ export function PostTable({ posts }: { posts: Post[] }) {
                     <Badge variant="outline" className="gap-1">
                       <Play className="h-3 w-3" />
                       Video
+                    </Badge>
+                  ) : post.tipoContenido === 'compartida' || post.tipoContenido === 'compartido' ? (
+                    <Badge variant="outline" className="gap-1">
+                      <Share2 className="h-3 w-3" />
+                      Compartido
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="gap-1">

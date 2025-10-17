@@ -5,9 +5,23 @@ interface PatchRequest {
   seguimiento: boolean;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const fromDate = searchParams.get('from');
+    const toDate = searchParams.get('to');
+    
+    const where: any = {};
+    
+    if (fromDate && toDate) {
+      where.fecha = {
+        gte: new Date(fromDate),
+        lte: new Date(toDate)
+      };
+    }
+
     const postsRaw = await prisma.post.findMany({
+      where,
       orderBy: { fecha: 'desc' },
       select: {
         id: true,
