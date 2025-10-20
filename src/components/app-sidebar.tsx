@@ -36,7 +36,7 @@ const data = {
       icon: LayoutDashboard,
     },
     {
-      title: "Seguimiento de Publicaciones",
+      title: "Publicaciones",
       url: "/dashboard/posts/extracted",
       icon: BookImage,
     },
@@ -60,29 +60,36 @@ export function AppSidebar({
   user?: { name: string; email: string; avatar: string };
 }) {
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
-      </SidebarHeader>
+    <Sidebar collapsible="icon" className="bg-primary flex flex-col" {...props}>
+      <div className="flex flex-col h-full">
+        <SidebarHeader className="border-b border-primary-foreground/10">
+          <TeamSwitcher teams={data.teams} />
+        </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarMenu>
-          {data.navItems.map((item) => (
-            <SidebarMenuItem key={item.url}>
-              <SidebarMenuButton asChild>
-                <a href={item.url} className="flex items-center gap-2">
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.title}</span>
-                </a>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarContent>
+        <div className="flex-1 overflow-y-auto">
+          <SidebarContent>
+            <SidebarMenu>
+              {data.navItems.map((item) => (
+                <SidebarMenuItem key={item.url}>
+                  <SidebarMenuButton asChild>
+                    <a 
+                      href={item.url} 
+                      className="flex items-center gap-2 hover:bg-white/10 transition-colors rounded-md p-2"
+                    >
+                      <item.icon className="w-4 h-4" />
+                      <span>{item.title}</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarContent>
+        </div>
 
-      <SidebarFooter>
-        <NavUser user={user || data.user} />
-      </SidebarFooter>
+        <SidebarFooter className="border-t border-primary-foreground/10 mt-auto">
+          <NavUser user={user || data.user} />
+        </SidebarFooter>
+      </div>
 
       <SidebarRail />
     </Sidebar>

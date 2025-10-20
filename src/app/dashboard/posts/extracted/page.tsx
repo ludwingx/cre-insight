@@ -352,9 +352,9 @@ export default function ExtractedPostsPage() {
             alert('Error al iniciar el scraping. Por favor, inténtalo de nuevo.');
           }
         }}
-        className="h-8 bg-blue-600 text-white hover:bg-blue-700 px-3 text-xs gap-1.5 hover:cursor-pointer"
+        className="h-8 text-white  px-3 text-xs gap-1.5 hover:cursor-pointer"
       >
-        <Scissors className="h-3 w-3" />
+        <Scissors className="h-3 w-3 " />
         Extraer
       </Button>
     </div>
@@ -362,70 +362,31 @@ export default function ExtractedPostsPage() {
 </div>
 
 
-          {/* Posts Table Card */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div>
-                  <CardTitle>Publicaciones</CardTitle>
-                  <CardDescription className="mt-1 flex flex-wrap items-center gap-2">
-                    {formatDateRange()}
-                    {hasActiveFilters && (
-                      <>
-                        {selectedPlatform !== "all" && (
-                          <Badge variant="secondary" className="flex items-center gap-1">
-                            Red: {selectedPlatform}
-                          </Badge>
-                        )}
-                        {contentType !== "all" && (
-                          <Badge variant="secondary" className="flex items-center gap-1">
-                            Tipo: {contentType}
-                          </Badge>
-                        )}
-                        {seguimientoFilter !== 'all' && (
-                          <Badge variant="secondary" className="flex items-center gap-1">
-                            {seguimientoFilter === 'tracked' ? 'Seguimiento activo' : 'Seguimiento deshabilitado'}
-                          </Badge>
-                        )}
-                        {sortBy !== 'date-desc' && (
-                          <Badge variant="secondary" className="flex items-center gap-1">
-                            Orden: {sortBy.includes('desc') ? 'Mayor' : 'Menor'} {sortBy.split('-')[0]}
-                          </Badge>
-                        )}
-                      </>
-                    )}
-                  </CardDescription>
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  {filteredPosts.length} de {allPosts.length} {allPosts.length === 1 ? 'publicación' : 'publicaciones'}
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex justify-center items-center h-32">
-                  <p className="text-muted-foreground">Cargando publicaciones...</p>
-                </div>
-              ) : allPosts.length === 0 ? (
-                <div className="flex justify-center items-center h-32">
-                  <p className="text-muted-foreground">No hay publicaciones en el rango de fechas seleccionado.</p>
-                </div>
-              ) : filteredPosts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-32 space-y-2">
-                  <p className="text-muted-foreground">No se encontraron publicaciones con los filtros actuales.</p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={clearFilters}
-                  >
-                    Limpiar filtros
-                  </Button>
-                </div>
-              ) : (
-                <PostTable posts={filteredPosts} />
-              )}
-            </CardContent>
-          </Card>
+{/* Posts Table - Con border */}
+<div className="rounded-lg p-6">
+  {loading ? (
+    <div className="flex justify-center items-center h-32">
+      <p className="text-muted-foreground">Cargando publicaciones...</p>
+    </div>
+  ) : allPosts.length === 0 ? (
+    <div className="flex justify-center items-center h-32">
+      <p className="text-muted-foreground">No hay publicaciones en el rango de fechas seleccionado.</p>
+    </div>
+  ) : filteredPosts.length === 0 ? (
+    <div className="flex flex-col items-center justify-center h-32 space-y-2">
+      <p className="text-muted-foreground">No se encontraron publicaciones con los filtros actuales.</p>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={clearFilters}
+      >
+        Limpiar filtros
+      </Button>
+    </div>
+  ) : (
+    <PostTable posts={filteredPosts} />
+  )}
+</div>
         </div>
       </main>
     </div>

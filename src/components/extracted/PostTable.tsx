@@ -105,9 +105,8 @@ export function PostTable({ posts }: { posts: Post[] }) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <div className="min-w-[900px] md:min-w-0">
-      {/* Image Modal */}
+    <div className="rounded-md border overflow-hidden">
+      {/* Image Modal - Moved outside the table */}
       <Dialog open={!!selectedImage} onOpenChange={(open) => !open && closeImageModal()}>
         <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-transparent border-none shadow-none">
           <DialogHeader className="sr-only">
@@ -133,208 +132,211 @@ export function PostTable({ posts }: { posts: Post[] }) {
           </div>
         </DialogContent>
       </Dialog>
-      <Table className="w-full [&_tr]:h-auto [&_td]:align-middle text-xs sm:text-sm">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="text-center">Red Social</TableHead>
-            <TableHead className="text-center">Tipo</TableHead>
-            <TableHead className="text-center">Fecha</TableHead>
-            <TableHead className="text-center">Imagen</TableHead>
-            <TableHead className="min-w-[200px] md:min-w-[300px] text-center">Texto</TableHead>
-            <TableHead className="text-center hidden sm:table-cell">Likes</TableHead>
-            <TableHead className="text-center hidden md:table-cell">Comentarios</TableHead>
-            <TableHead className="text-center hidden lg:table-cell">Compartidos</TableHead>
-            <TableHead className="text-center hidden xl:table-cell">Vistas</TableHead>
-            <TableHead className="text-center hidden sm:table-cell">Seguimiento</TableHead>
-            <TableHead className="text-center">Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {postList.map((post) => (
-            <TableRow key={post.id}>
-              {/* Red Social - Centrado */}
-              <TableCell className="text-center align-middle">
-                <div className="flex justify-center">
-                  <Badge variant="outline" className="gap-1">
-                    {post.redsocial.toLowerCase() === 'facebook' ? (
-                      <Facebook className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                    ) : post.redsocial.toLowerCase() === 'instagram' ? (
-                      <Instagram className="h-3 w-3 text-pink-600 dark:text-pink-400" />
+
+      {/* Scrollable Table */}
+      <div className="relative overflow-auto max-h-[calc(80vh-200px)]">
+        <Table className="w-full [&_tr]:h-auto [&_td]:align-middle text-xs sm:text-sm">
+          <TableHeader className="sticky top-0 bg-background z-10">
+            <TableRow>
+              <TableHead className="text-center">Red Social</TableHead>
+              <TableHead className="text-center">Tipo</TableHead>
+              <TableHead className="text-center">Fecha</TableHead>
+              <TableHead className="text-center">Imagen</TableHead>
+              <TableHead className="min-w-[200px] md:min-w-[300px] text-center">Texto</TableHead>
+              <TableHead className="text-center hidden sm:table-cell">Likes</TableHead>
+              <TableHead className="text-center hidden md:table-cell">Comentarios</TableHead>
+              <TableHead className="text-center hidden lg:table-cell">Compartidos</TableHead>
+              <TableHead className="text-center hidden xl:table-cell">Vistas</TableHead>
+              <TableHead className="text-center hidden sm:table-cell">Seguimiento</TableHead>
+              <TableHead className="text-center">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {postList.map((post) => (
+              <TableRow key={post.id}>
+                {/* Red Social - Centrado */}
+                <TableCell className="text-center align-middle">
+                  <div className="flex justify-center">
+                    <Badge variant="outline" className="gap-1">
+                      {post.redsocial.toLowerCase() === 'facebook' ? (
+                        <Facebook className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                      ) : post.redsocial.toLowerCase() === 'instagram' ? (
+                        <Instagram className="h-3 w-3 text-pink-600 dark:text-pink-400" />
+                      ) : (
+                        <span className="h-3 w-3 rounded-full bg-gray-300" />
+                      )}
+                      {post.redsocial}
+                    </Badge>
+                  </div>
+                </TableCell>
+
+                {/* Tipo - Centrado */}
+                <TableCell className="text-center align-middle">
+                  <div className="flex justify-center">
+                    {post.tipoContenido === 'video' ? (
+                      <Badge variant="outline" className="gap-1">
+                        <Play className="h-3 w-3" />
+                        Video
+                      </Badge>
+                    ) : post.tipoContenido === 'compartida' || post.tipoContenido === 'compartido' ? (
+                      <Badge variant="outline" className="gap-1">
+                        <Share2 className="h-3 w-3" />
+                        Compartido
+                      </Badge>
                     ) : (
-                      <span className="h-3 w-3 rounded-full bg-gray-300" />
-                    )}
-                    {post.redsocial}
-                  </Badge>
-                </div>
-              </TableCell>
-
-              {/* Tipo - Centrado */}
-              <TableCell className="text-center align-middle">
-                <div className="flex justify-center">
-                  {post.tipoContenido === 'video' ? (
-                    <Badge variant="outline" className="gap-1">
-                      <Play className="h-3 w-3" />
-                      Video
-                    </Badge>
-                  ) : post.tipoContenido === 'compartida' || post.tipoContenido === 'compartido' ? (
-                    <Badge variant="outline" className="gap-1">
-                      <Share2 className="h-3 w-3" />
-                      Compartido
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="gap-1">
-                      <ImageIcon className="h-3 w-3" />
-                      Imagen
-                    </Badge>
-                  )}
-                </div>
-              </TableCell>
-
-              {/* Fecha - Centrado */}
-              <TableCell className="text-center align-middle">
-                <div className="flex flex-col items-center justify-center">
-                  <span className="whitespace-nowrap">
-                    {new Date(post.fechapublicacion).toLocaleDateString('es-BO', {
-                      year: 'numeric',
-                      month: '2-digit',
-                      day: '2-digit'
-                    })}
-                  </span>
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">
-                    {new Date(post.fechapublicacion).toLocaleTimeString('es-BO', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true
-                    })}
-                  </span>
-                </div>
-              </TableCell>
-
-              {/* Imagen - Centrado */}
-              <TableCell className="text-center align-middle">
-                <div className="flex justify-center">
-                  <div className="relative w-16 h-16">
-                    {post.url_imagen && !imageErrors.has(post.id) ? (
-                      <>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (post.url_imagen) {
-                              openImageModal(post.url_imagen, `Imagen de ${post.redsocial}`)
-                            }
-                          }}
-                          className="w-full h-full hover:opacity-90 transition-opacity"
-                          aria-label="Ver imagen en grande"
-                          disabled={!post.url_imagen}
-                        >
-                          <img
-                            src={post.url_imagen}
-                            alt="Miniatura"
-                            className={`w-full h-full object-cover rounded-md transition-opacity duration-300 ${
-                              loadedImages.has(post.id) ? 'opacity-100' : 'opacity-0'
-                            }`}
-                            onError={() => handleImageError(post.id)}
-                            onLoad={() => handleImageLoad(post.id)}
-                            loading="lazy"
-                            crossOrigin="anonymous"
-                            referrerPolicy="no-referrer"
-                          />
-                        </button>
-                        {!loadedImages.has(post.id) && !imageErrors.has(post.id) && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-md">
-                            <div className="animate-pulse w-full h-full bg-gray-200 rounded-md"></div>
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-md text-gray-400">
-                        <span className="text-xs text-center">
-                          {post.url_imagen ? 'Error' : 'Sin imagen'}
-                        </span>
-                      </div>
+                      <Badge variant="outline" className="gap-1">
+                        <ImageIcon className="h-3 w-3" />
+                        Imagen
+                      </Badge>
                     )}
                   </div>
-                </div>
-              </TableCell>
+                </TableCell>
 
-              {/* Texto - NO Centrado (mantiene alineación por defecto) */}
-              <TableCell className="whitespace-normal py-4 align-top">
-                <div className="pr-2">
-                  {post.texto}
-                </div>
-              </TableCell>
+                {/* Fecha - Centrado */}
+                <TableCell className="text-center align-middle">
+                  <div className="flex flex-col items-center justify-center">
+                    <span className="whitespace-nowrap">
+                      {new Date(post.fechapublicacion).toLocaleDateString('es-BO', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                      })}
+                    </span>
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      {new Date(post.fechapublicacion).toLocaleTimeString('es-BO', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </span>
+                  </div>
+                </TableCell>
 
-              {/* Likes - Centrado */}
-              <TableCell className="text-center align-middle">{post.likes}</TableCell>
+                {/* Imagen - Centrado */}
+                <TableCell className="text-center align-middle">
+                  <div className="flex justify-center">
+                    <div className="relative w-16 h-16">
+                      {post.url_imagen && !imageErrors.has(post.id) ? (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (post.url_imagen) {
+                                openImageModal(post.url_imagen, `Imagen de ${post.redsocial}`)
+                              }
+                            }}
+                            className="w-full h-full hover:opacity-90 transition-opacity"
+                            aria-label="Ver imagen en grande"
+                            disabled={!post.url_imagen}
+                          >
+                            <img
+                              src={post.url_imagen}
+                              alt="Miniatura"
+                              className={`w-full h-full object-cover rounded-md transition-opacity duration-300 ${
+                                loadedImages.has(post.id) ? 'opacity-100' : 'opacity-0'
+                              }`}
+                              onError={() => handleImageError(post.id)}
+                              onLoad={() => handleImageLoad(post.id)}
+                              loading="lazy"
+                              crossOrigin="anonymous"
+                              referrerPolicy="no-referrer"
+                            />
+                          </button>
+                          {!loadedImages.has(post.id) && !imageErrors.has(post.id) && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-md">
+                              <div className="animate-pulse w-full h-full bg-gray-200 rounded-md"></div>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-md text-gray-400">
+                          <span className="text-xs text-center">
+                            {post.url_imagen ? 'Error' : 'Sin imagen'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TableCell>
 
-              {/* Comentarios - Centrado */}
-              <TableCell className="text-center align-middle">{post.comentarios}</TableCell>
+                {/* Texto - NO Centrado (mantiene alineación por defecto) */}
+                <TableCell className="whitespace-normal py-4 align-top">
+                  <div className="pr-2">
+                    {post.texto}
+                  </div>
+                </TableCell>
 
-              {/* Compartidos - Centrado */}
-              <TableCell className="text-center align-middle">{post.compartidos}</TableCell>
+                {/* Likes - Centrado */}
+                <TableCell className="text-center align-middle">{post.likes}</TableCell>
 
-              {/* Vistas - Centrado */}
-              <TableCell className="text-center align-middle">
-                {post.vistas > 0 ? (
-                  <span className="font-medium">
-                    {post.vistas.toLocaleString()}
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground">-</span>
-                )}
-              </TableCell>
+                {/* Comentarios - Centrado */}
+                <TableCell className="text-center align-middle">{post.comentarios}</TableCell>
 
-              {/* Seguimiento - Centrado */}
-              <TableCell className="text-center align-middle">
-                <div className="flex justify-center">
-                  <Switch
-                    checked={post.seguimiento}
-                    onCheckedChange={(checked) =>
-                      handleSeguimientoChange(post.id, checked)
-                    }
-                    className="data-[state=checked]:bg-blue-500 cursor-pointer"
-                  />
-                </div>
-              </TableCell>
+                {/* Compartidos - Centrado */}
+                <TableCell className="text-center align-middle">{post.compartidos}</TableCell>
 
-              {/* Acciones - Centrado */}
-              <TableCell className="text-center align-middle">
-                <div className="flex justify-center gap-2">
-                  {post.url_publicacion ? (
-                    <Link
-                      href={post.url_publicacion}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                {/* Vistas - Centrado */}
+                <TableCell className="text-center align-middle">
+                  {post.vistas > 0 ? (
+                    <span className="font-medium">
+                      {post.vistas.toLocaleString()}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
+                </TableCell>
+
+                {/* Seguimiento - Centrado */}
+                <TableCell className="text-center align-middle">
+                  <div className="flex justify-center">
+                    <Switch
+                      checked={post.seguimiento}
+                      onCheckedChange={(checked) =>
+                        handleSeguimientoChange(post.id, checked)
+                      }
+                      className="data-[state=checked]:bg-primary cursor-pointer"
+                    />
+                  </div>
+                </TableCell>
+
+                {/* Acciones - Centrado */}
+                <TableCell className="text-center align-middle">
+                  <div className="flex justify-center gap-2">
+                    {post.url_publicacion ? (
+                      <Link
+                        href={post.url_publicacion}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button
+                          variant="link"
+                          className="text-primary hover:text-primary cursor-pointer"
+                          size="sm"
+                        >
+                          Ver publicación
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button variant="ghost" size="sm" disabled>
+                        Sin enlace
+                      </Button>
+                    )}
+
+                    <Link href={`/dashboard/posts/extracted/${post.id}/tracking`}>
                       <Button
                         variant="link"
-                        className="text-blue-500 hover:text-blue-600 cursor-pointer"
                         size="sm"
+                        className="text-primary hover:text-primary cursor-pointer"
                       >
-                        Ver publicación
+                        Ver seguimiento
                       </Button>
                     </Link>
-                  ) : (
-                    <Button variant="ghost" size="sm" disabled>
-                      Sin enlace
-                    </Button>
-                  )}
-
-                  <Link href={`/dashboard/posts/extracted/${post.id}/tracking`}>
-                    <Button
-                      variant="link"
-                      size="sm"
-                      className="text-blue-500 hover:text-blue-600 cursor-pointer"
-                    >
-                      Ver seguimiento
-                    </Button>
-                  </Link>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   )
