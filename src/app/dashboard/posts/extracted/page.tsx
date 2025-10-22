@@ -5,18 +5,15 @@ import { Separator } from "@/components/ui/separator"
 import { PostTable, type Post } from "@/components/extracted/PostTable"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
-import { RefreshCw, Scissors, Search, Filter, X, Calendar } from "lucide-react"
+import { RefreshCw, Scissors, Search, Filter, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
 import { DateRange } from "react-day-picker"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { getCurrentMonthRange, formatDateForAPI } from "@/lib/date-utils"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 
 type SortOption = 'date-desc' | 'date-asc' | 'likes-desc' | 'likes-asc' | 'comments-desc' | 'comments-asc' | 'shares-desc' | 'shares-asc' | 'views-desc' | 'views-asc'
@@ -165,26 +162,31 @@ export default function ExtractedPostsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-        <div className="flex items-center w-full gap-2 px-4">
-          <div className="flex items-center gap-2 flex-grow min-w-0">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <Breadcrumb className="truncate">
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="#">Publicaciones Extraídas</BreadcrumbLink>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
+      <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="-ml-1" />
+          <Separator
+            orientation="vertical"
+            className="mr-2 data-[orientation=vertical]:h-4"
+          />
+          <Breadcrumb className="truncate">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink href="#">Publicaciones Extraídas</BreadcrumbLink>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+        <div className="flex items-center h-full py-2">
+          <img 
+            src="https://www.cre.com.bo/wp-content/uploads/2024/10/logo-cre-fb.jpg" 
+            alt="CRE Logo" 
+            className="h-full w-auto object-contain"
+          />
         </div>
       </header>
       
@@ -250,7 +252,7 @@ export default function ExtractedPostsPage() {
     <div className="min-w-[130px]">
       <Label htmlFor="platform" className="text-xs mb-2 block">Red Social</Label>
       <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
-        <SelectTrigger id="platform" className="h-8 text-xs">
+        <SelectTrigger id="platform" className="h-8 text-xs hover:cursor-pointer">
           <SelectValue placeholder="Todas" />
         </SelectTrigger>
         <SelectContent>
@@ -266,7 +268,7 @@ export default function ExtractedPostsPage() {
     <div className="min-w-[130px]">
       <Label htmlFor="content-type" className="text-xs mb-2 block">Tipo</Label>
       <Select value={contentType} onValueChange={setContentType}>
-        <SelectTrigger id="content-type" className="h-8 text-xs">
+        <SelectTrigger id="content-type" className="h-8 text-xs hover:cursor-pointer">
           <SelectValue placeholder="Todos" />
         </SelectTrigger>
         <SelectContent>
@@ -284,7 +286,7 @@ export default function ExtractedPostsPage() {
     <div className="min-w-[140px]">
       <Label htmlFor="sort" className="text-xs mb-2 block">Ordenar</Label>
       <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
-        <SelectTrigger id="sort" className="h-8 text-xs">
+        <SelectTrigger id="sort" className="h-8 text-xs hover:cursor-pointer">
           <SelectValue placeholder="Orden..." />
         </SelectTrigger>
         <SelectContent>
@@ -303,7 +305,7 @@ export default function ExtractedPostsPage() {
         value={seguimientoFilter}
         onValueChange={(value: SeguimientoFilter) => setSeguimientoFilter(value)}
       >
-        <SelectTrigger id="tracked-filter" className="h-8 text-xs">
+        <SelectTrigger id="tracked-filter" className="h-8 text-xs hover:cursor-pointer">
           <SelectValue placeholder="Estado" />
         </SelectTrigger>
         <SelectContent>
@@ -314,17 +316,17 @@ export default function ExtractedPostsPage() {
       </Select>
     </div>
 
-    {/* Action Buttons - Ahora a la derecha */}
+
     <div className="flex items-end gap-2 ml-auto">
       <Button 
-        variant="outline" 
+        variant="default" 
         size="sm"
         onClick={() => dateRange?.from && fetchPosts(dateRange.from, dateRange.to || dateRange.from)} 
         disabled={loading}
-        className="h-8 px-3 text-xs gap-1.5 hover:cursor-pointer"
+        className="h-8 px-3 text-xs gap-1.5 hover:cursor-pointer border hover:bg-white hover:text-black hover:border"
       >
         <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
-        Actualizar
+        {loading ? 'Actualizando...' : 'Actualizar'}
       </Button>
       <Button 
         variant="default" 
@@ -352,7 +354,7 @@ export default function ExtractedPostsPage() {
             alert('Error al iniciar el scraping. Por favor, inténtalo de nuevo.');
           }
         }}
-        className="h-8 text-white  px-3 text-xs gap-1.5 hover:cursor-pointer"
+        className="h-8 px-3 text-xs gap-1.5 hover:cursor-pointer border hover:bg-white hover:text-black hover:border"
       >
         <Scissors className="h-3 w-3 " />
         Extraer

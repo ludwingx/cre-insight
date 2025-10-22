@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { cookies } from "next/headers";
 
+// Simple check if there's an auth cookie, without verifying it
 export default async function Home() {
+  const cookieStore = await cookies();
+  const hasAuthCookie = cookieStore.has('session');
   return (
     <main className="flex flex-col min-h-screen w-full items-center justify-center bg-gradient-to-br from-white via-white to-slate-100">
       <div className="flex flex-col items-center gap-4 w-full max-w-2xl px-6">
@@ -29,18 +33,19 @@ export default async function Home() {
           <span className="font-semibold">TikTok</span>.
         </h2>
 
-        {/* CTA */}
         <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
           <Link href="/dashboard" className="w-full">
-            <Button className="w-full bg-[#2c5d5a] cursor-pointer hover:bg-[#244a48] text-white text-lg py-6 rounded-xl shadow-lg transition-all duration-200">
+            <Button variant="outline" className="w-full cursor-pointer border-2 border-[#2c5d5a] hover:border-[#2c5d5a] text-lg py-6 rounded-xl transition-colors duration-300">
               Ir al Dashboard
             </Button>
           </Link>
-          <Link href="/login" className="w-full">
-            <Button variant="outline" className="w-full cursor-pointer border-2 border-[#2c5d5a] text-[#2c5d5a] hover:bg-[#e8f0ef] hover:border-[#2c5d5a] text-lg py-6 rounded-xl transition-colors duration-300">
-              Iniciar Sesión
-            </Button>
-          </Link>
+          {!hasAuthCookie && (
+            <Link href="/login" className="w-full">
+              <Button variant="outline" className="w-full cursor-pointer border-2 border-[#2c5d5a] hover:border-[#2c5d5a] text-lg py-6 rounded-xl transition-colors duration-300">
+                Iniciar Sesión
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Footer */}

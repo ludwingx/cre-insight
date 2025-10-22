@@ -80,7 +80,7 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
+            <DropdownMenuItem className="hover:cursor-pointer"
               onClick={async () => {
                 const res = await (await import("@/app/actions/auth")).logoutAction();
                 if (res.success) {
@@ -88,7 +88,7 @@ export function NavUser({
                 }
               }}
             >
-              <LogOut />
+              <LogOut className="hover:text-white" />
               Cerrar sesión
             </DropdownMenuItem>
           </DropdownMenuContent>

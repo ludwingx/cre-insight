@@ -115,7 +115,7 @@ export function DateRangePicker({
             <Button
               variant="outline"
               className={cn(
-                "justify-start text-left font-normal h-8 text-xs min-w-[80px]",
+                "justify-start text-left font-normal h-8 text-xs min-w-[80px] hover:cursor-pointer",
                 !date?.from && "text-muted-foreground"
               )}
               onClick={() => setOpen('desde')}
@@ -158,7 +158,7 @@ export function DateRangePicker({
             <Button
               variant="outline"
               className={cn(
-                "justify-start text-left font-normal h-8 text-xs min-w-[80px]",
+                "justify-start text-left font-normal h-8 text-xs min-w-[80px] hover:cursor-pointer",
                 !date?.to && "text-muted-foreground"
               )}
               onClick={() => setOpen('hasta')}

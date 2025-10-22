@@ -90,11 +90,11 @@ export default function NegativesPage() {
           </div>
           <div className="flex-shrink-0 w-full sm:w-auto mt-3 sm:mt-0">
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={fetchMentions}
               disabled={loading}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto cursor-pointer hover:bg-primary/80 "
             >
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
@@ -114,11 +114,11 @@ export default function NegativesPage() {
                   {error}
                 </p>
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   onClick={fetchMentions}
                   disabled={loading}
-                  className="mt-2"
+                  className="mt-2 hover:bg-primary/80 "
                 >
                   <RefreshCw
                     className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
