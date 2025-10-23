@@ -1,4 +1,3 @@
-"use client"
 
 "use client"
 
@@ -47,6 +46,7 @@ const formatImageUrl = (base64: string | null): string | null => {
 };
 
 export type Mention = {
+  status: any
   id: number
   sourceName: string
   sourceUrl: string

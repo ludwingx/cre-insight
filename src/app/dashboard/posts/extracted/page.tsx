@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
+import { toast } from "sonner"
 import { Separator } from "@/components/ui/separator"
 import { PostTable, type Post } from "@/components/extracted/PostTable"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -20,6 +21,7 @@ type SortOption = 'date-desc' | 'date-asc' | 'likes-desc' | 'likes-asc' | 'comme
 
 export default function ExtractedPostsPage() {
   const [allPosts, setAllPosts] = useState<Post[]>([])
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState<DateRange | undefined>(getCurrentMonthRange())
   
@@ -41,9 +43,59 @@ export default function ExtractedPostsPage() {
     return Array.from(new Set(allPosts.map(post => post.tipoContenido))).filter(Boolean) as string[]
   }, [allPosts])
 
+  // Fetch posts from the API
+  const fetchPosts = useCallback(async (startDate: Date, endDate: Date) => {
+    setLoading(true);
+    try {
+      const url = new URL('/api/posts/extracted', window.location.origin);
+      
+      if (startDate && endDate) {
+        const startOfDay = new Date(startDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        url.searchParams.append('from', startOfDay.toISOString());
+        url.searchParams.append('to', endOfDay.toISOString());
+      }
+      
+      console.log('Fetching posts from:', url.toString());
+      const response = await fetch(url.toString());
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
+        throw new Error(`Error al cargar las publicaciones (${response.status}): ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Fetched posts:', data);
+      
+      if (!Array.isArray(data.posts)) {
+        console.error('Unexpected response format:', data);
+        throw new Error('Formato de respuesta inesperado del servidor');
+      }
+      
+      setAllPosts(data.posts);
+      return data.posts;
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      toast.error(error instanceof Error ? error.message : 'Error al cargar las publicaciones');
+      setAllPosts([]);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Apply all filters and sorting
-  const filteredPosts = useMemo(() => {
-    let filtered = allPosts.filter(post => {
+  const applyFiltersAndSorting = useCallback((posts: Post[]) => {
+    let filtered = posts.filter(post => {
       // Text search
       const matchesSearch = !searchTerm || 
         post.texto.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -64,101 +116,46 @@ export default function ExtractedPostsPage() {
       return matchesSearch && matchesPlatform && matchesContentType && matchesSeguimiento
     })
 
-    // Apply sorting
-    return filtered.sort((a, b) => {
+    const sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
-        case 'likes-asc': return (a.likes || 0) - (b.likes || 0)
-        case 'likes-desc': return (b.likes || 0) - (a.likes || 0)
-        case 'comments-asc': return (a.comentarios || 0) - (b.comentarios || 0)
-        case 'comments-desc': return (b.comentarios || 0) - (a.comentarios || 0)
-        case 'shares-asc': return (a.compartidos || 0) - (b.compartidos || 0)
-        case 'shares-desc': return (b.compartidos || 0) - (a.compartidos || 0)
-        case 'views-asc': return (a.vistas || 0) - (b.vistas || 0)
-        case 'views-desc': return (b.vistas || 0) - (a.vistas || 0)
+        case 'date-desc': return new Date(b.fechapublicacion).getTime() - new Date(a.fechapublicacion).getTime()
         case 'date-asc': return new Date(a.fechapublicacion).getTime() - new Date(b.fechapublicacion).getTime()
-        case 'date-desc':
-        default:
-          return new Date(b.fechapublicacion).getTime() - new Date(a.fechapublicacion).getTime()
+        case 'likes-desc': return (b.likes || 0) - (a.likes || 0)
+        case 'likes-asc': return (a.likes || 0) - (b.likes || 0)
+        case 'comments-desc': return (b.comentarios || 0) - (a.comentarios || 0)
+        case 'comments-asc': return (a.comentarios || 0) - (b.comentarios || 0)
+        case 'shares-desc': return (b.compartidos || 0) - (a.compartidos || 0)
+        case 'shares-asc': return (a.compartidos || 0) - (b.compartidos || 0)
+        case 'views-desc': return (b.vistas || 0) - (a.vistas || 0)
+        case 'views-asc': return (a.vistas || 0) - (b.vistas || 0)
+        default: return 0
       }
-    })
-  }, [allPosts, searchTerm, selectedPlatform, contentType, sortBy, seguimientoFilter])
+    });
+    setFilteredPosts(sorted);
+    return sorted;
+  }, [searchTerm, selectedPlatform, contentType, sortBy, seguimientoFilter]);
 
-  const fetchPosts = async (from?: Date, to?: Date) => {
-    try {
-      setLoading(true)
-      const url = new URL('/api/posts/extracted', window.location.origin)
-      
-      if (from && to) {
-        const startOfDay = new Date(from)
-        startOfDay.setHours(0, 0, 0, 0)
-        
-        const endOfDay = new Date(to)
-        endOfDay.setHours(23, 59, 59, 999)
-        
-        url.searchParams.append('from', formatDateForAPI(startOfDay))
-        url.searchParams.append('to', formatDateForAPI(endOfDay))
-      }
-      
-      const res = await fetch(url.toString())
-      const data = await res.json()
-      setAllPosts(data.posts || [])
-    } catch (error) {
-      console.error('Error fetching posts:', error)
-      setAllPosts([])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Fetch posts when date range changes
+  // Apply filters and sorting when dependencies change
   useEffect(() => {
-    const fetchData = async () => {
-      if (dateRange?.from) {
-        const fromDate = dateRange.from
-        const toDate = dateRange.to || new Date()
-        
-        const startOfDay = new Date(fromDate)
-        startOfDay.setHours(0, 0, 0, 0)
-        
-        const endOfDay = new Date(toDate)
-        endOfDay.setHours(23, 59, 59, 999)
-        
-        await fetchPosts(startOfDay, endOfDay)
-      } else {
-        await fetchPosts()
-      }
-    }
-    
-    fetchData()
-  }, [dateRange])
+    applyFiltersAndSorting(allPosts);
+  }, [searchTerm, selectedPlatform, contentType, sortBy, seguimientoFilter, allPosts, applyFiltersAndSorting]);
 
-  // Format date range display
-  const formatDateRange = () => {
-    if (!dateRange?.from) return 'Selecciona un rango de fechas'
-    
-    const from = dateRange.from
-    const to = dateRange.to || dateRange.from
-    
-    if (from.getTime() === to.getTime()) {
-      return format(from, "d 'de' MMMM 'de' yyyy", { locale: es })
+  // Initial data load
+  useEffect(() => {
+    if (dateRange?.from) {
+      fetchPosts(dateRange.from, dateRange.to || dateRange.from);
     }
-    
-    if (from.getMonth() === to.getMonth() && from.getFullYear() === to.getFullYear()) {
-      return `${from.getDate()} - ${to.getDate()} de ${format(from, 'MMMM', { locale: es })} ${from.getFullYear()}`
-    }
-    
-    return `${format(from, 'd MMM yyyy', { locale: es })} - ${format(to, 'd MMM yyyy', { locale: es })}`
-  }
+  }, [dateRange, fetchPosts]);
 
   const clearFilters = () => {
     setSearchTerm("")
     setSelectedPlatform("all")
     setContentType("all")
-    setSortBy('date-desc')
     setSeguimientoFilter('all')
+    setSortBy('date-desc')
   }
 
-  const hasActiveFilters = searchTerm || selectedPlatform !== "all" || contentType !== "all" || sortBy !== 'date-desc' || seguimientoFilter !== 'all'
+  const hasActiveFilters = searchTerm || selectedPlatform !== "all" || contentType !== "all" || seguimientoFilter !== 'all' || sortBy !== 'date-desc';
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -212,9 +209,14 @@ export default function ExtractedPostsPage() {
       </h3>
     </div>
     {hasActiveFilters && (
-      <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 px-2 text-xs">
-        <X className="h-3 w-3 mr-1" />
-        Limpiar
+      <Button 
+        variant="outline" 
+        size="sm"
+        onClick={clearFilters}
+        className="h-8 hover:bg-destructive hover:text-destructive-foreground"
+      >
+        <X className="mr-2 h-3 w-3" />
+        Limpiar filtros
       </Button>
     )}
   </div>
@@ -318,6 +320,17 @@ export default function ExtractedPostsPage() {
 
 
     <div className="flex items-end gap-2 ml-auto">
+      {hasActiveFilters && (
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={clearFilters}
+          className="h-8 hover:bg-destructive hover:text-destructive-foreground"
+        >
+          <X className="mr-2 h-3 w-3" />
+          Limpiar filtros
+        </Button>
+      )}
       <Button 
         variant="default" 
         size="sm"
@@ -332,26 +345,55 @@ export default function ExtractedPostsPage() {
         variant="default" 
         size="sm" 
         onClick={async () => {
+          // Show loading toast
+          const toastId = toast.loading('Extrayendo nuevas publicaciones de Facebook...');
+          
           try {
+            const requestBody = {
+              action: 'start_scraping',
+              timestamp: new Date().toISOString()
+            };
+            
             const response = await fetch('https://intelexia-labs-n8n.af9gwe.easypanel.host/webhook-test/creinsights', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json'
               },
-              body: JSON.stringify({
-                action: 'start_scraping',
-                timestamp: new Date().toISOString()
-              })
+              body: JSON.stringify(requestBody)
             });
             
-            if (!response.ok) {
-              throw new Error('Error al iniciar el scraping');
+            // Parse response
+            let responseData;
+            try {
+              responseData = await response.json();
+            } catch (e) {
+              responseData = await response.text();
             }
             
-            alert('Scraping iniciado correctamente');
+            if (!response.ok) {
+              const errorMessage = typeof responseData === 'object' && responseData.message 
+                ? responseData.message 
+                : response.statusText;
+              
+              throw new Error(`Error del servidor (${response.status}): ${errorMessage}`);
+            }
+            
+            // Update the toast to show success
+            toast.success('Extracción finalizada correctamente', { id: toastId });
+            
+            // Refresh the posts table
+            if (dateRange?.from) {
+              await fetchPosts(dateRange.from, dateRange.to || dateRange.from);
+            }
+            
           } catch (error) {
             console.error('Error al iniciar scraping:', error);
-            alert('Error al iniciar el scraping. Por favor, inténtalo de nuevo.');
+            // Update the toast to show error
+            toast.error(
+              `Error al iniciar el scraping: ${error instanceof Error ? error.message : 'Error desconocido'}`, 
+              { id: toastId }
+            );
           }
         }}
         className="h-8 px-3 text-xs gap-1.5 hover:cursor-pointer border hover:bg-white hover:text-black hover:border"
