@@ -2,10 +2,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cookies } from "next/headers";
 
-// Simple check if there's an auth cookie, without verifying it
+// Corrección: No usar await cookies() directamente, solo cookies()
 export default async function Home() {
-  const cookieStore = await cookies();
-  const hasAuthCookie = cookieStore.has('session');
+  const cookieStore = cookies();
+  const hasAuthCookie = (await cookieStore).has('session');
   return (
     <main className="flex flex-col min-h-screen w-full items-center justify-center bg-gradient-to-br from-white via-white to-slate-100">
       <div className="flex flex-col items-center gap-4 w-full max-w-2xl px-6">
