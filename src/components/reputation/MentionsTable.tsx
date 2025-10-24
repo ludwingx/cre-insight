@@ -127,20 +127,20 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
 
   return (
     <div className="rounded-md border overflow-hidden">
-      <div className="min-w-[800px] md:min-w-0 overflow-x-auto">
-        <Table className="[&_tr]:h-auto">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-center align-middle">Plataforma</TableHead>
-              <TableHead className="text-center align-middle">Fuente</TableHead>
-              <TableHead className="text-center align-middle">Fecha</TableHead>
-              <TableHead className="text-center align-middle">Imagen</TableHead>
-              <TableHead className="text-center align-middle min-w-[200px]">Contenido</TableHead>
-              <TableHead className="text-center align-middle min-w-[150px]">Razón Específica</TableHead>
-              <TableHead className="text-center align-middle min-w-[150px]">Comentario Principal</TableHead>
-              <TableHead className="text-center align-middle">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
+    <div className="relative overflow-auto max-h-[calc(80vh-200px)]">
+      <Table className="w-full [&_tr]:h-auto [&_td]:align-middle text-xs sm:text-sm">
+        <TableHeader className="sticky top-0 bg-background z-10">
+          <TableRow>
+            <TableHead className="text-center">Plataforma</TableHead>
+            <TableHead className="text-center">Fuente</TableHead>
+            <TableHead className="text-center">Fecha</TableHead>
+            <TableHead className="text-center">Imagen</TableHead>
+            <TableHead className="min-w-[200px] md:min-w-[300px] text-center">Contenido</TableHead>
+            <TableHead className="text-center">Razón Específica</TableHead>
+            <TableHead className="text-center">Comentario Principal</TableHead>
+            <TableHead className="text-center">Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
           <TableBody>
             {mentions.map((mention) => (
               <TableRow key={mention.id}>
