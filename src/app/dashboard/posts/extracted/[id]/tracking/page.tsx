@@ -168,13 +168,13 @@ export default function TrackingPage() {
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b border-border p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/dashboard/posts/extracted">
-            <Button variant="ghost" size="sm" className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="flex items-center gap-2 cursor-pointer">
               <ArrowLeft className="w-4 h-4" />
               Volver
             </Button>
           </Link>
           <h1 className="text-xl font-semibold">
-            Seguimiento del Post #{post.id}
+            Evolución de la publicación
           </h1>
         </div>
       </header>
@@ -186,7 +186,7 @@ export default function TrackingPage() {
           <CardHeader className="flex items-center gap-3">
             {post.url_imagen && (
               <Image
-                src="https://scontent.fsrz2-1.fna.fbcdn.net/v/t39.30808-1/338383831_3388804091336963_8627329445741827313_n.png?stp=dst-png_s200x200&_nc_cat=108&ccb=1-7&_nc_sid=f907e8&_nc_ohc=A7VuG2rvgGMQ7kNvwERoolz&_nc_oc=AdlBJubnFUmxaJbpZ4iQSgVZvAE0A_5EafGf_rMp29eRGNilt9rRvR5cnM626uH9d-Y&_nc_zt=24&_nc_ht=scontent.fsrz2-1.fna&_nc_gid=pnGWbKjkCvEPijpMcP6XYA&oh=00_AfeZcP77tEnqlJX8yyfTT4IFb_usE1GakeVMuMnAO3F_sg&oe=68EB1864"
+                src="/logos/cre-logo.png"
                 alt="CRE R.L. Cooperativa Rural de Electrificación"
                 width={48}
                 height={48}
@@ -223,7 +223,7 @@ export default function TrackingPage() {
 
             {post.url_publicacion && (
               <Link href={post.url_publicacion} target="_blank">
-                <Button variant="outline" size="sm" className="w-full mt-2">
+                <Button variant="outline" size="sm" className="w-full mt-2 cursor-pointer">
                   Ver publicación
                 </Button>
               </Link>
