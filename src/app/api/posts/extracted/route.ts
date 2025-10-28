@@ -11,17 +11,8 @@ export async function GET(request: Request) {
     const fromDate = searchParams.get('from');
     const toDate = searchParams.get('to');
     
-    const where: any = {};
-    
-    if (fromDate && toDate) {
-      where.fecha = {
-        gte: new Date(fromDate),
-        lte: new Date(toDate)
-      };
-    }
-
-    const postsRaw = await prisma.post.findMany({
-      where,
+    // First, get all posts without any filters
+    const allPosts = await prisma.post.findMany({
       orderBy: { fecha: 'desc' },
       select: {
         id: true,
@@ -39,10 +30,32 @@ export async function GET(request: Request) {
         vistas: true,
       },
     });
-    // Mapeo para PostTable
-    const posts = postsRaw.map(post => ({
+
+    // Then filter in memory
+    const filteredPosts = allPosts.filter(post => {
+      // Skip posts with empty or null id_publicacion
+      if (!post.id_publicacion || post.id_publicacion.trim() === '') {
+        return false;
+      }
+      
+      // Apply date filter if dates are provided
+      if (fromDate && toDate) {
+        const postDate = new Date(post.fecha);
+        const startDate = new Date(fromDate);
+        const endDate = new Date(toDate);
+        
+        if (postDate < startDate || postDate > endDate) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+    
+    // Map to the required format
+    const posts = filteredPosts.map(post => ({
       id: post.id,
-      perfil: post.id_publicacion, // O ajusta según lo que quieras mostrar
+      perfil: post.id_publicacion,
       redsocial: post.plataforma,
       texto: post.texto,
       fechapublicacion: post.fecha,
@@ -55,8 +68,10 @@ export async function GET(request: Request) {
       tipoContenido: post.tipoContenido,
       vistas: post.vistas
     }));
+    
     return NextResponse.json({ posts });
   } catch (error) {
+    console.error('Error fetching posts:', error);
     return NextResponse.json({ error: 'Error fetching posts' }, { status: 500 });
   }
 }
