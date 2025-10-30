@@ -70,12 +70,15 @@ export default function TrackingPage() {
         }
 
         if (data.tracking && Array.isArray(data.tracking)) {
+          // Filter out the initial data point (where isInitial is true)
+          const filteredTracking = data.tracking.filter((item: any) => !item.isInitial);
+          
           setTrackingData(
-            data.tracking.map((item: any) => ({
-              date: formatDateForDisplay(item.date || item.fecha),
+            filteredTracking.map((item: any) => ({
+              date: formatDateForDisplay(item.date || item.fecha || item.collectedAt),
               likes: item.likes || 0,
-              comentarios: item.comentarios || 0,
-              compartidos: item.compartidos || 0,
+              comentarios: item.comments || item.comentarios || 0,
+              compartidos: item.shares || item.compartidos || 0,
             }))
           )
         }

@@ -198,9 +198,9 @@ export default function KeywordsPage() {
         </div>
 
         {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column - Add Keyword Section */}
-          <Card className="h-fit">
+          <Card className="h-fit lg:col-span-4">
             <CardHeader>
               <div className="space-y-1">
                 <CardTitle>Agregar Palabra Clave</CardTitle>
@@ -242,7 +242,7 @@ export default function KeywordsPage() {
           </Card>
 
           {/* Right Column - Keywords List Section */}
-          <Card>
+          <Card className="lg:col-span-8">
             <CardHeader>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="space-y-1">
@@ -295,9 +295,10 @@ export default function KeywordsPage() {
                   </p>
                 </div>
               ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
+                <div className="rounded-md border overflow-hidden">
+                  <div className="max-h-[400px] overflow-y-auto">
+                    <Table className="min-w-full">
+                      <TableHeader>
                       <TableRow>
                         <TableHead className="w-[50px] text-center">ID</TableHead>
                         <TableHead>Palabra Clave</TableHead>
@@ -378,7 +379,8 @@ export default function KeywordsPage() {
                         </TableRow>
                       ))}
                     </TableBody>
-                  </Table>
+                    </Table>
+                  </div>
                 </div>
               )}
             </CardContent>

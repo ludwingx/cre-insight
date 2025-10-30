@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { X } from "lucide-react"
 import React from "react"
+import { toast } from "sonner"
 
 export type Post = {
   id: string
@@ -33,6 +34,7 @@ export function PostTable({ posts }: { posts: Post[] }) {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
   const [selectedImage, setSelectedImage] = useState<{ url: string; alt: string } | null>(null)
+  const [updatingPosts, setUpdatingPosts] = useState<Set<string>>(new Set())
 
   // Update postList when posts prop changes
   React.useEffect(() => {
@@ -57,50 +59,145 @@ export function PostTable({ posts }: { posts: Post[] }) {
   }
 
   async function handleSeguimientoChange(id: string, checked: boolean): Promise<void> {
-    // Optimistic update
-    setPostList((prev) =>
-      prev.map((post) =>
-        post.id === id ? { ...post, seguimiento: checked } : post
-      )
-    );
+    // Prevent multiple clicks on the same post
+    if (updatingPosts.has(id)) {
+      toast.info('Actualización en progreso...');
+      return;
+    }
+
+    // Add to updating set
+    setUpdatingPosts(prev => new Set(prev).add(id));
+
+    // Show loading toast
+    const toastId = toast.loading(checked ? 'Activando seguimiento...' : 'Desactivando seguimiento...');
 
     try {
-      const response = await fetch(`/api/posts/${id}/seguimiento`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ seguimiento: checked }),
-      });
+      // Add a small delay to prevent UI jank and rapid API calls
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('API Error:', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData,
-          url: response.url
+      // Optimistic update
+      setPostList(prev =>
+        prev.map((post) =>
+          post.id === id ? { ...post, seguimiento: checked } : post
+        )
+      );
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      try {
+        const response = await fetch(`/api/posts/${id}/seguimiento`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ seguimiento: checked }),
+          signal: controller.signal
         });
-        throw new Error(errorData.error || 'Failed to update seguimiento status');
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          // If we get a 409 Conflict, it means the post was already in the desired state
+          if (response.status === 409) {
+            // No need to show an error, just update the UI to match the server
+            const serverState = await response.json();
+            setPostList(prev =>
+              prev.map((post) =>
+                post.id === id ? { ...post, seguimiento: serverState.seguimiento } : post
+              )
+            );
+            toast.success(serverState.seguimiento ? 'Seguimiento ya estaba activado' : 'Seguimiento ya estaba desactivado', {
+              id: toastId
+            });
+            return;
+          }
+
+          let errorMessage = 'Error al actualizar el seguimiento';
+          try {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('API Error Response:', {
+              status: response.status,
+              statusText: response.statusText,
+              error: errorData,
+              url: response.url
+            });
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch (e) {
+            console.error('Error parsing error response:', e);
+          }
+          throw new Error(errorMessage);
+        }
+
+        const updatedPost = await response.json().catch(() => null);
+
+        // If we couldn't parse the response, use the optimistic value
+        if (!updatedPost) {
+          console.warn('Empty or invalid response from server, using optimistic update');
+          toast.success(checked ? 'Seguimiento actualizado (sin confirmación del servidor)' : 'Seguimiento desactivado (sin confirmación del servidor)', {
+            id: toastId
+          });
+          return;
+        }
+
+        // Update with server response
+        setPostList(prev => prev.map(post => 
+          post.id === id ? { ...post, seguimiento: updatedPost.seguimiento } : post
+        ));
+
+        // Show success notification
+        toast.success(updatedPost.seguimiento ? 'Seguimiento activado correctamente' : 'Seguimiento desactivado correctamente', {
+          id: toastId
+        });
+
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            throw new Error('La solicitud tardó demasiado tiempo. Por favor, inténtalo de nuevo.');
+          }
+        }
+        throw error; // Re-throw to be caught by the outer catch
       }
 
-      // Update local state with the server response
-      const updatedPost = await response.json();
-      setPostList(prev => prev.map(post => 
-        post.id === id ? { ...post, seguimiento: updatedPost.seguimiento } : post
-      ));
-
     } catch (error) {
-      console.error('Error updating seguimiento:', error);
+      const errorDetails = error instanceof Error ? error.message : 'Error desconocido';
+      console.error('Error updating seguimiento:', {
+        error: errorDetails,
+        id,
+        checked
+      });
+      
       // Revert on error
-      setPostList((prev) =>
+      setPostList(prev =>
         prev.map((post) =>
           post.id === id ? { ...post, seguimiento: !checked } : post
         )
       );
       
-      // Show error message to the user
-      alert(`Error al actualizar el estado de seguimiento: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      // Show error notification
+      const errorMessage = error instanceof Error ? 
+        (error.message.includes('timed out') ? error.message : 
+         error.message.includes('Failed to fetch') ? 'Error de conexión. Verifica tu conexión a internet.' : 
+         error.message) : 
+        'Error desconocido';
+      
+      toast.error(
+        `Error al ${checked ? 'activar' : 'desactivar'} el seguimiento: ${errorMessage}`, 
+        { 
+          id: toastId,
+          duration: 5000 // Show error for 5 seconds
+        }
+      );
+    } finally {
+      // Remove from updating set with a small delay to prevent rapid toggles
+      setTimeout(() => {
+        setUpdatingPosts(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(id);
+          return newSet;
+        });
+      }, 300);
     }
   }
 
@@ -291,10 +388,9 @@ export function PostTable({ posts }: { posts: Post[] }) {
                   <div className="flex justify-center">
                     <Switch
                       checked={post.seguimiento}
-                      onCheckedChange={(checked) =>
-                        handleSeguimientoChange(post.id, checked)
-                      }
-                      className="data-[state=checked]:bg-primary cursor-pointer"
+                      onCheckedChange={(checked) => handleSeguimientoChange(post.id, checked)}
+                      disabled={updatingPosts.has(post.id)}
+                      className="data-[state=checked]:bg-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                 </TableCell>
