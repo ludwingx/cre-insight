@@ -8,7 +8,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { RefreshCw, Scissors, Search, Filter, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { DateRange } from "react-day-picker"
+import { DateRange } from "@/components/ui/date-range-picker"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { getCurrentMonthRange, formatDateForAPI } from "@/lib/date-utils"
@@ -23,7 +23,7 @@ export default function ExtractedPostsPage() {
   const [allPosts, setAllPosts] = useState<Post[]>([])
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(getCurrentMonthRange())
+  const [dateRange, setDateRange] = useState<DateRange>(getCurrentMonthRange())
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState("")
@@ -35,7 +35,6 @@ export default function ExtractedPostsPage() {
 
   // Available platforms and content types for filters
   const platforms = useMemo(() => {
-    // Return fixed list of social networks
     return ['Facebook', 'Instagram', 'TikTok']
   }, [])
   
@@ -197,240 +196,247 @@ export default function ExtractedPostsPage() {
               </p>
             </div>
           </div>
-{/* Filters Card - Compacta */}
-{/* Tools & Filters - Sin card */}
-<div className="space-y-4">
-  {/* Header */}
-  <div className="flex items-center justify-between">
-    <div className="flex items-center gap-2">
-      <Filter className="h-4 w-4 text-muted-foreground" />
-      <h3 className="text-base font-semibold">
-        Herramientas y Filtros
-      </h3>
-    </div>
-    {hasActiveFilters && (
-      <Button 
-        variant="outline" 
-        size="sm"
-        onClick={clearFilters}
-        className="h-8 hover:bg-destructive hover:text-destructive-foreground"
-      >
-        <X className="mr-2 h-3 w-3" />
-        Limpiar filtros
-      </Button>
-    )}
-  </div>
 
-  {/* Filtros y botones */}
-  <div className="flex flex-wrap items-end gap-3">
-    {/* Date Range Picker */}
-    <div className="min-w-[200px]">
-      <Label className="text-xs mb-2 block">Fechas</Label>
-      <DateRangePicker 
-        date={dateRange}
-        onDateChange={setDateRange}
-        className="h-8"
-        fromPlaceholder="Desde"
-        toPlaceholder="Hasta"
-      />
-    </div>
+          {/* Tools & Filters */}
+          <div className="space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-base font-semibold">
+                  Herramientas y Filtros
+                </h3>
+              </div>
+              {hasActiveFilters && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={clearFilters}
+                  className="h-8 hover:bg-destructive hover:text-destructive-foreground"
+                >
+                  <X className="mr-2 h-3 w-3" />
+                  Limpiar filtros
+                </Button>
+              )}
+            </div>
 
-    {/* Search */}
-    <div className="min-w-[160px]">
-      <Label htmlFor="search" className="text-xs mb-2 block">Buscar</Label>
-      <div className="relative">
-        <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          id="search"
-          placeholder="Texto o perfil..."
-          className="pl-7 h-8 text-xs"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-    </div>
-
-    {/* Platform Filter */}
-    <div className="min-w-[130px]">
-      <Label htmlFor="platform" className="text-xs mb-2 block">Red Social</Label>
-      <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
-        <SelectTrigger id="platform" className="h-8 text-xs hover:cursor-pointer">
-          <SelectValue placeholder="Todas" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all" className="text-xs">Todas</SelectItem>
-          <SelectItem value="Facebook" className="text-xs">Facebook</SelectItem>
-          <SelectItem value="Instagram" className="text-xs">Instagram</SelectItem>
-          <SelectItem value="TikTok" className="text-xs">TikTok</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-
-    {/* Content Type Filter */}
-    <div className="min-w-[130px]">
-      <Label htmlFor="content-type" className="text-xs mb-2 block">Tipo</Label>
-      <Select value={contentType} onValueChange={setContentType}>
-        <SelectTrigger id="content-type" className="h-8 text-xs hover:cursor-pointer">
-          <SelectValue placeholder="Todos" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all" className="text-xs">Todos</SelectItem>
-          {postContentTypes.map(type => (
-            <SelectItem key={type} value={type} className="text-xs">
-              {type}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-
-    {/* Sort Filter */}
-    <div className="min-w-[140px]">
-      <Label htmlFor="sort" className="text-xs mb-2 block">Ordenar</Label>
-      <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
-        <SelectTrigger id="sort" className="h-8 text-xs hover:cursor-pointer">
-          <SelectValue placeholder="Orden..." />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="date-desc" className="text-xs">Más recientes</SelectItem>
-          <SelectItem value="date-asc" className="text-xs">Más antiguos</SelectItem>
-          <SelectItem value="likes-desc" className="text-xs">Más likes</SelectItem>
-          <SelectItem value="likes-asc" className="text-xs">Menos likes</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-
-    {/* Seguimiento Filter */}
-    <div className="min-w-[150px]">
-      <Label htmlFor="tracked-filter" className="text-xs mb-2 block">Seguimiento</Label>
-      <Select 
-        value={seguimientoFilter}
-        onValueChange={(value: SeguimientoFilter) => setSeguimientoFilter(value)}
-      >
-        <SelectTrigger id="tracked-filter" className="h-8 text-xs hover:cursor-pointer">
-          <SelectValue placeholder="Estado" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all" className="text-xs">Todos</SelectItem>
-          <SelectItem value="tracked" className="text-xs">Con seguimiento</SelectItem>
-          <SelectItem value="not-tracked" className="text-xs">Sin seguimiento</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-
-
-    <div className="flex items-end gap-2 ml-auto">
-      {hasActiveFilters && (
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={clearFilters}
-          className="h-8 hover:bg-destructive hover:text-destructive-foreground"
-        >
-          <X className="mr-2 h-3 w-3" />
-          Limpiar filtros
-        </Button>
-      )}
-      <Button 
-        variant="default" 
-        size="sm"
-        onClick={() => dateRange?.from && fetchPosts(dateRange.from, dateRange.to || dateRange.from)} 
-        disabled={loading}
-        className="h-8 px-3 text-xs gap-1.5 hover:cursor-pointer border hover:bg-white hover:text-black hover:border"
-      >
-        <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
-        {loading ? 'Actualizando...' : 'Actualizar'}
-      </Button>
-      <Button 
-        variant="default" 
-        size="sm" 
-        onClick={async () => {
-          // Show loading toast
-          const toastId = toast.loading('Extrayendo nuevas publicaciones de Facebook...');
-          
-          try {
-            const requestBody = {
-              action: 'start_scraping',
-              timestamp: new Date().toISOString()
-            };
-            
-            const response = await fetch('https://intelexia-labs-n8n.af9gwe.easypanel.host/webhook-test/creinsights', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify(requestBody)
-            });
-            
-            // Parse response
-            let responseData;
-            try {
-              responseData = await response.json();
-            } catch (e) {
-              responseData = await response.text();
-            }
-            
-            if (!response.ok) {
-              const errorMessage = typeof responseData === 'object' && responseData.message 
-                ? responseData.message 
-                : response.statusText;
+            {/* Fila 1: Solo Fechas */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg border">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Rango de fechas</Label>
+                <div className="flex items-center gap-2">
+                  <DateRangePicker 
+                    date={dateRange}
+                    onDateChange={setDateRange}
+                    className="flex-1"
+                    fromPlaceholder="Desde"
+                    toPlaceholder="Hasta"
+                  />
+                </div>
+              </div>
               
-              throw new Error(`Error del servidor (${response.status}): ${errorMessage}`);
-            }
-            
-            // Update the toast to show success
-            toast.success('Extracción finalizada correctamente', { id: toastId });
-            
-            // Refresh the posts table
-            if (dateRange?.from) {
-              await fetchPosts(dateRange.from, dateRange.to || dateRange.from);
-            }
-            
-          } catch (error) {
-            console.error('Error al iniciar scraping:', error);
-            // Update the toast to show error
-            toast.error(
-              `Error al iniciar el scraping: ${error instanceof Error ? error.message : 'Error desconocido'}`, 
-              { id: toastId }
-            );
-          }
-        }}
-        className="h-8 px-3 text-xs gap-1.5 hover:cursor-pointer border hover:bg-white hover:text-black hover:border"
-      >
-        <Scissors className="h-3 w-3 " />
-        Extraer
-      </Button>
-    </div>
-  </div>
-</div>
+              {/* Botones de Acción en la misma fila */}
+              <div className="flex items-end gap-2">
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={() => dateRange?.from && fetchPosts(dateRange.from, dateRange.to || dateRange.from)} 
+                  disabled={loading}
+                  className="h-9 flex-1 text-sm gap-1.5 hover:cursor-pointer border hover:bg-white hover:text-black hover:border"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  {loading ? 'Actualizando...' : 'Actualizar'}
+                </Button>
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  onClick={async () => {
+                    const toastId = toast.loading('Extrayendo nuevas publicaciones de Facebook...');
+                    
+                    try {
+                      const requestBody = {
+                        action: 'start_scraping',
+                        timestamp: new Date().toISOString()
+                      };
+                      
+                      const response = await fetch('https://intelexia-labs-n8n.af9gwe.easypanel.host/webhook-test/creinsights', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(requestBody)
+                      });
+                      
+                      let responseData;
+                      try {
+                        responseData = await response.json();
+                      } catch (e) {
+                        responseData = await response.text();
+                      }
+                      
+                      if (!response.ok) {
+                        const errorMessage = typeof responseData === 'object' && responseData.message 
+                          ? responseData.message 
+                          : response.statusText;
+                        
+                        throw new Error(`Error del servidor (${response.status}): ${errorMessage}`);
+                      }
+                      
+                      toast.success('Extracción finalizada correctamente', { id: toastId });
+                      
+                      if (dateRange?.from) {
+                        await fetchPosts(dateRange.from, dateRange.to || dateRange.from);
+                      }
+                      
+                    } catch (error) {
+                      console.error('Error al iniciar scraping:', error);
+                      toast.error(
+                        `Error al iniciar el scraping: ${error instanceof Error ? error.message : 'Error desconocido'}`, 
+                        { id: toastId }
+                      );
+                    }
+                  }}
+                  className="h-9 flex-1 text-sm gap-1.5 hover:cursor-pointer border hover:bg-white hover:text-black hover:border"
+                >
+                  <Scissors className="h-4 w-4" />
+                  Extraer
+                </Button>
+              </div>
+            </div>
 
+            {/* Fila 2: Filtros de Búsqueda y Filtrado */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-4 bg-muted/30 rounded-lg border">
+              {/* Search */}
+              <div className="space-y-2">
+                <Label htmlFor="search" className="text-sm font-medium">Buscar</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="search"
+                    placeholder="Buscar por texto o perfil..."
+                    className="pl-9 h-9 text-sm"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
 
-{/* Posts Table - Con border */}
-<div className="rounded-lg p-6">
-  {loading ? (
-    <div className="flex justify-center items-center h-32">
-      <p className="text-muted-foreground">Cargando publicaciones...</p>
-    </div>
-  ) : allPosts.length === 0 ? (
-    <div className="flex justify-center items-center h-32">
-      <p className="text-muted-foreground">No hay publicaciones en el rango de fechas seleccionado.</p>
-    </div>
-  ) : filteredPosts.length === 0 ? (
-    <div className="flex flex-col items-center justify-center h-32 space-y-2">
-      <p className="text-muted-foreground">No se encontraron publicaciones con los filtros actuales.</p>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={clearFilters}
-      >
-        Limpiar filtros
-      </Button>
-    </div>
-  ) : (
-    <PostTable posts={filteredPosts} />
-  )}
-</div>
+              {/* Platform Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="platform" className="text-sm font-medium">Plataforma</Label>
+                <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Todas las plataformas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-sm">Todas</SelectItem>
+                    <SelectItem value="Facebook" className="text-sm">Facebook</SelectItem>
+                    <SelectItem value="Instagram" className="text-sm">Instagram</SelectItem>
+                    <SelectItem value="TikTok" className="text-sm">TikTok</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Content Type Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="content-type" className="text-sm font-medium">Tipo de contenido</Label>
+                <Select value={contentType} onValueChange={setContentType}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Todos los tipos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-sm">Todos</SelectItem>
+                    {postContentTypes.map(type => (
+                      <SelectItem key={type} value={type} className="text-sm">
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Sort By */}
+              <div className="space-y-2">
+                <Label htmlFor="sort" className="text-sm font-medium">Ordenar por</Label>
+                <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Seleccionar orden" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date-desc" className="text-sm">Más recientes</SelectItem>
+                    <SelectItem value="date-asc" className="text-sm">Más antiguos</SelectItem>
+                    <SelectItem value="likes-desc" className="text-sm">Más likes</SelectItem>
+                    <SelectItem value="likes-asc" className="text-sm">Menos likes</SelectItem>
+                    <SelectItem value="comments-desc" className="text-sm">Más comentarios</SelectItem>
+                    <SelectItem value="comments-asc" className="text-sm">Menos comentarios</SelectItem>
+                    <SelectItem value="shares-desc" className="text-sm">Más compartidos</SelectItem>
+                    <SelectItem value="shares-asc" className="text-sm">Menos compartidos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Seguimiento Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="tracked-filter" className="text-sm font-medium">Seguimiento</Label>
+                <Select 
+                  value={seguimientoFilter}
+                  onValueChange={(value: SeguimientoFilter) => setSeguimientoFilter(value)}
+                >
+                  <SelectTrigger id="tracked-filter" className="h-9 text-sm hover:cursor-pointer">
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-sm">Todos</SelectItem>
+                    <SelectItem value="tracked" className="text-sm">Con seguimiento</SelectItem>
+                    <SelectItem value="not-tracked" className="text-sm">Sin seguimiento</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Clear Filters Button */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-transparent">Acción</Label>
+                {hasActiveFilters && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={clearFilters}
+                    className="h-9 w-full hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Limpiar filtros
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Posts Table */}
+          <div className="rounded-lg p-6 border">
+            {loading ? (
+              <div className="flex justify-center items-center h-32">
+                <p className="text-muted-foreground">Cargando publicaciones...</p>
+              </div>
+            ) : allPosts.length === 0 ? (
+              <div className="flex justify-center items-center h-32">
+                <p className="text-muted-foreground">No hay publicaciones en el rango de fechas seleccionado.</p>
+              </div>
+            ) : filteredPosts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-32 space-y-2">
+                <p className="text-muted-foreground">No se encontraron publicaciones con los filtros actuales.</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={clearFilters}
+                >
+                  Limpiar filtros
+                </Button>
+              </div>
+            ) : (
+              <PostTable posts={filteredPosts} />
+            )}
+          </div>
         </div>
       </main>
     </div>

@@ -1,23 +1,52 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval, subMonths } from "date-fns";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { 
+  format, 
+  startOfMonth, 
+  endOfMonth, 
+  startOfWeek, 
+  endOfWeek, 
+  startOfDay, 
+  endOfDay,
+  subMonths, 
+  subWeeks, 
+  subDays,
+  eachDayOfInterval,
+  isWithinInterval 
+} from "date-fns";
 import { es } from "date-fns/locale";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarDays, MessageSquare, ThumbsUp, Share2, AlertCircle, BarChart3, Users, Eye, TrendingUp, TrendingDown } from "lucide-react";
+import { CalendarDays, MessageSquare, ThumbsUp, Share2, AlertCircle, BarChart3, Eye, TrendingUp, TrendingDown, RefreshCw, ExternalLink } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { ActivityChart } from "@/components/dashboard/charts/activity-chart";
+import { EngagementMetricsChart, EngagementMetricsChartSkeleton } from "@/components/dashboard/charts/engagement-metrics-chart";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Types for our data
 interface Post {
   id: number;
+  id_publicacion: string;
+  plataforma: string;
   texto: string;
   me_gusta: number;
   comentarios: number;
   compartidos: number;
   fecha: string;
+  timestamp?: number;
+  hashtags: string[];
+  tiene_imagen: boolean;
+  image_base64?: string;
+  url_publicacion: string;
+  seguimiento: boolean;
+  tipoContenido: string;
   vistas: number;
-  tipoContenido?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface EngagementData {
@@ -33,175 +62,363 @@ interface SentimentData {
   color: string;
 }
 
+interface DateRange {
+  start: Date;
+  end: Date;
+  previousStart: Date;
+  previousEnd: Date;
+}
+
+// Error boundary component for Next.js 15
+function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
+  return (
+    <div className="p-6 rounded-lg bg-destructive/10 border border-destructive/30">
+      <div className="flex items-center gap-3 mb-4 text-destructive">
+        <AlertCircle className="w-5 h-5" />
+        <h2 className="text-lg font-semibold">¡Algo salió mal!</h2>
+      </div>
+      <p className="mb-4 text-sm">{error.message}</p>
+      <Button variant="outline" size="sm" onClick={resetErrorBoundary}>
+        <RefreshCw className="mr-2 h-4 w-4" />
+        Reintentar
+      </Button>
+    </div>
+  );
+}
+
 export default function OverviewPage() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [timeRange, setTimeRange] = useState<'month' | 'week' | 'day'>('month');
+  const [allPosts, setAllPosts] = useState<Post[]>([]); // Store all posts for filtering
+  const [timeRange, setTimeRange] = useState<'day' | 'week' | 'month'>('month');
   
-  // Get current month's start and end dates
-  const now = new Date();
-  const monthStart = startOfMonth(now);
-  const monthEnd = endOfMonth(now);
-  const lastMonthStart = startOfMonth(subMonths(now, 1));
-  const lastMonthEnd = endOfMonth(subMonths(now, 1));
-
-  // Fetch posts data from the API
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        // Format dates for the API
-        const fromDate = format(monthStart, 'yyyy-MM-dd');
-        const toDate = format(monthEnd, 'yyyy-MM-dd');
-        
-        // Fetch posts from the API
-        const response = await fetch(`/api/posts/extracted?from=${fromDate}&to=${toDate}`);
-        if (!response.ok) {
-          throw new Error('Error al cargar las publicaciones');
-        }
-        
-        const { posts: currentMonthPosts } = await response.json();
-        
-        // Fetch last month's posts for comparison
-        const lastMonthFrom = format(lastMonthStart, 'yyyy-MM-dd');
-        const lastMonthTo = format(lastMonthEnd, 'yyyy-MM-dd');
-        const lastMonthResponse = await fetch(`/api/posts/extracted?from=${lastMonthFrom}&to=${lastMonthTo}`);
-        let lastMonthData: Post[] = [];
-        
-        if (lastMonthResponse.ok) {
-          const data = await lastMonthResponse.json();
-          lastMonthData = data.posts || [];
-        }
-        
-        setPosts(currentMonthPosts || []);
-        
-        // Calculate metrics for current month
-        const currentMetrics = calculateMetrics(currentMonthPosts || []);
-        const lastMonthMetrics = calculateMetrics(lastMonthData);
-        
-        // Calculate percentage changes
-        const calculateChange = (current: number, previous: number) => {
-          if (previous === 0) return current > 0 ? 100 : 0;
-          return ((current - previous) / previous) * 100;
+  // Calculate date ranges based on timeRange
+  const dateRange = useMemo((): DateRange => {
+    const now = new Date();
+    
+    switch (timeRange) {
+      case 'day':
+        return {
+          start: startOfDay(now),
+          end: endOfDay(now),
+          previousStart: startOfDay(subDays(now, 1)),
+          previousEnd: endOfDay(subDays(now, 1))
         };
-        
-        setMetrics({
-          totalPosts: currentMetrics.totalPosts,
-          totalReach: currentMetrics.totalReach,
-          totalEngagement: currentMetrics.totalEngagement,
-          avgEngagement: currentMetrics.avgEngagement,
-          postsChange: calculateChange(currentMetrics.totalPosts, lastMonthMetrics.totalPosts),
-          reachChange: calculateChange(currentMetrics.totalReach, lastMonthMetrics.totalReach),
-          engagementChange: calculateChange(currentMetrics.totalEngagement, lastMonthMetrics.totalEngagement),
-          avgEngagementChange: calculateChange(currentMetrics.avgEngagement, lastMonthMetrics.avgEngagement),
+      case 'week':
+        return {
+          start: startOfDay(subDays(now, 6)), // Last 7 days including today
+          end: endOfDay(now),
+          previousStart: startOfDay(subDays(now, 13)), // Previous 7 days
+          previousEnd: endOfDay(subDays(now, 7))
+        };
+      case 'month':
+      default:
+        return {
+          start: startOfMonth(now),
+          end: endOfMonth(now),
+          previousStart: startOfMonth(subMonths(now, 1)),
+          previousEnd: endOfMonth(subMonths(now, 1))
+        };
+    }
+  }, [timeRange]);
+
+  // Filter posts based on current date range
+  const filteredPosts = useMemo(() => {
+    return allPosts.filter(post => {
+      try {
+        const postDate = new Date(post.fecha);
+        return isWithinInterval(postDate, { 
+          start: dateRange.start, 
+          end: dateRange.end 
         });
+      } catch {
+        return false;
+      }
+    });
+  }, [allPosts, dateRange]);
+
+  // Filter previous period posts for comparison
+  const previousPeriodPosts = useMemo(() => {
+    return allPosts.filter(post => {
+      try {
+        const postDate = new Date(post.fecha);
+        return isWithinInterval(postDate, { 
+          start: dateRange.previousStart, 
+          end: dateRange.previousEnd 
+        });
+      } catch {
+        return false;
+      }
+    });
+  }, [allPosts, dateRange]);
+
+  // Helper function to normalize and validate post data
+  const normalizePost = (post: any): Post => {
+    try {
+      const postDate = post.fecha || post.fechapublicacion || post.created_at || new Date().toISOString();
+      const normalizedDate = new Date(postDate).toISOString();
+      const hasImage = Boolean(post.tiene_imagen || post.image_base64 || post.image);
+      const postId = post.id || Math.floor(Math.random() * 10000);
+      const postPublicId = post.id_publicacion || post.id || String(Math.random().toString(36).substr(2, 9));
+      
+      return {
+        id: postId,
+        id_publicacion: postPublicId,
+        plataforma: post.plataforma || 'facebook',
+        texto: post.texto || post.contenido || '',
+        me_gusta: Number(post.me_gusta || post.likes || 0),
+        comentarios: Number(post.comentarios || post.comments || 0),
+        compartidos: Number(post.compartidos || post.shares || 0),
+        fecha: normalizedDate,
+        timestamp: post.timestamp ? Number(post.timestamp) : Math.floor(new Date(normalizedDate).getTime() / 1000),
+        hashtags: Array.isArray(post.hashtags) ? post.hashtags : [],
+        tiene_imagen: hasImage,
+        image_base64: post.image_base64 || post.image || undefined,
+        url_publicacion: post.url_publicacion || post.url || post.permalink_url || `https://facebook.com/${postPublicId}`,
+        seguimiento: post.seguimiento !== undefined ? Boolean(post.seguimiento) : true,
+        tipoContenido: post.tipoContenido || (hasImage ? 'imagen' : 'texto'),
+        vistas: Number(post.vistas || post.views || 0),
+        created_at: post.created_at || normalizedDate,
+        updated_at: post.updated_at || normalizedDate
+      };
+    } catch (error) {
+      console.error('Error normalizing post:', error, 'Post data:', post);
+      return {
+        id: Math.floor(Math.random() * 10000),
+        id_publicacion: String(Math.random().toString(36).substr(2, 9)),
+        plataforma: 'facebook',
+        texto: 'Error al cargar esta publicación',
+        me_gusta: 0,
+        comentarios: 0,
+        compartidos: 0,
+        fecha: new Date().toISOString(),
+        timestamp: Math.floor(Date.now() / 1000),
+        hashtags: [],
+        tiene_imagen: false,
+        url_publicacion: '',
+        seguimiento: true,
+        tipoContenido: 'error',
+        vistas: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+    }
+  };
+
+  // Memoized fetch function
+  const fetchPosts = useCallback(async (from: Date, to: Date) => {
+    const fromDate = format(from, 'yyyy-MM-dd');
+    const toDate = format(to, 'yyyy-MM-dd');
+    
+    try {
+      const fields = [
+        'id', 'id_publicacion', 'plataforma', 'texto', 'me_gusta', 'comentarios', 'compartidos',
+        'fecha', 'timestamp', 'hashtags', 'tiene_imagen', 'image_base64', 'url_publicacion',
+        'seguimiento', 'tipoContenido', 'vistas', 'created_at', 'updated_at', 'url', 'permalink_url',
+        'likes', 'comments', 'shares', 'views', 'fechapublicacion', 'contenido', 'type', 'image'
+      ];
+      
+      const response = await fetch(
+        `/api/posts/extracted?from=${fromDate}&to=${toDate}&fields=${fields.join(',')}`
+      );
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!Array.isArray(data.posts)) {
+        console.warn('[WARNING] Expected posts array but got:', data);
+        return [];
+      }
+      
+      return data.posts.map(normalizePost);
+    } catch (error) {
+      console.error(`Error in fetchPosts:`, error);
+      throw error;
+    }
+  }, []);
+
+  // Fetch all posts data from the API
+  useEffect(() => {
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
+    
+    const fetchData = async () => {
+      if (!isMounted) return;
+      
+      setLoading(true);
+      setError(null);
+      
+      timeoutId = setTimeout(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }, 15000);
+      
+      try {
+        // Fetch data for a wider range to cover all time ranges
+        const now = new Date();
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(now.getMonth() - 3);
         
-        // Prepare engagement data for the chart
-        const engagementData = prepareEngagementData(currentMonthPosts || []);
-        setEngagementData(engagementData);
+        console.log('[OverviewPage] Fetching posts from last 3 months...');
+        const apiPosts = await fetchPosts(threeMonthsAgo, now);
         
-        // Prepare sentiment data (simplified for now)
-        const sentimentData = [
-          { name: 'Positivo', value: Math.floor(Math.random() * 100), color: '#10b981' },
-          { name: 'Neutral', value: Math.floor(Math.random() * 100), color: '#6366f1' },
-          { name: 'Negativo', value: Math.floor(Math.random() * 100), color: '#ef4444' },
-        ];
-        setSentimentData(sentimentData);
+        if (!isMounted) return;
         
-      } catch (error) {
-        console.error('Error fetching data:', error);
+        console.log(`[OverviewPage] Setting ${apiPosts.length} posts`);
+        setAllPosts(apiPosts);
+        
+        console.log('[OverviewPage] Data fetch completed successfully');
+        
+      } catch (err) {
+        console.error('[OverviewPage] Error in fetchData:', err);
+        if (isMounted) {
+          const error = err instanceof Error ? err : new Error('Error desconocido al cargar los datos');
+          setError(error);
+          setAllPosts([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          clearTimeout(timeoutId);
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
-  }, [monthStart, monthEnd, lastMonthStart, lastMonthEnd]);
-  
-  const [metrics, setMetrics] = useState({
-    totalPosts: 0,
-    totalReach: 0,
-    totalEngagement: 0,
-    avgEngagement: 0,
-    postsChange: 0,
-    reachChange: 0,
-    engagementChange: 0,
-    avgEngagementChange: 0,
-  });
-  
-  const [engagementData, setEngagementData] = useState<EngagementData[]>([]);
-  const [sentimentData, setSentimentData] = useState<SentimentData[]>([]);
-  
-  // Calculate metrics from posts
-  const calculateMetrics = (posts: Post[]) => {
-    if (!posts || posts.length === 0) {
-      return {
-        totalPosts: 0,
-        totalReach: 0,
-        totalEngagement: 0,
-        avgEngagement: 0,
-      };
-    }
     
-    const totalPosts = posts.length;
-    const totalReach = posts.reduce((sum, post) => sum + (post.vistas || 0), 0);
-    const totalEngagement = posts.reduce((sum, post) => 
-      sum + (post.me_gusta || 0) + (post.comentarios || 0) + (post.compartidos || 0), 0);
-    const avgEngagement = totalPosts > 0 ? Math.round(totalEngagement / totalPosts) : 0;
-    
-    return {
-      totalPosts,
-      totalReach,
-      totalEngagement,
-      avgEngagement,
+    return () => {
+      isMounted = false;
     };
-  };
-  
+  }, [fetchPosts]);
+
+  // Calculate metrics from posts with proper comparison
+  const calculateMetrics = useCallback((currentPosts: Post[], previousPosts: Post[]) => {
+    const calculateTotals = (posts: Post[]) => {
+      if (!posts || posts.length === 0) {
+        return { totalPosts: 0, totalReach: 0, totalEngagement: 0, avgEngagement: 0 };
+      }
+      
+      const totalPosts = posts.length;
+      const totalReach = posts.reduce((sum, post) => sum + (post.vistas || 0), 0);
+      const totalEngagement = posts.reduce((sum, post) => 
+        sum + (post.me_gusta || 0) + (post.comentarios || 0) + (post.compartidos || 0), 0);
+      const avgEngagement = totalPosts > 0 ? Math.round(totalEngagement / totalPosts) : 0;
+      
+      return { totalPosts, totalReach, totalEngagement, avgEngagement };
+    };
+
+    const current = calculateTotals(currentPosts);
+    const previous = calculateTotals(previousPosts);
+
+    const calculateChange = (current: number, previous: number) => {
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return ((current - previous) / previous) * 100;
+    };
+
+    return {
+      totalPosts: current.totalPosts,
+      totalReach: current.totalReach,
+      totalEngagement: current.totalEngagement,
+      avgEngagement: current.avgEngagement,
+      postsChange: calculateChange(current.totalPosts, previous.totalPosts),
+      reachChange: calculateChange(current.totalReach, previous.totalReach),
+      engagementChange: calculateChange(current.totalEngagement, previous.totalEngagement),
+      avgEngagementChange: calculateChange(current.avgEngagement, previous.avgEngagement),
+    };
+  }, []);
+
+  // Calculate metrics whenever filtered posts change
+  const metrics = useMemo(() => {
+    return calculateMetrics(filteredPosts, previousPeriodPosts);
+  }, [filteredPosts, previousPeriodPosts, calculateMetrics]);
+
   // Prepare engagement data for the chart
-  const prepareEngagementData = (posts: Post[]): EngagementData[] => {
-    // Group posts by date
+  const engagementData = useMemo((): EngagementData[] => {
     const postsByDate: Record<string, Post[]> = {};
     
-    posts.forEach(post => {
-      const date = format(new Date(post.fecha), 'yyyy-MM-dd');
-      if (!postsByDate[date]) {
-        postsByDate[date] = [];
+    filteredPosts.forEach(post => {
+      try {
+        if (!post.fecha) return;
+        const date = format(new Date(post.fecha), 'yyyy-MM-dd');
+        if (!postsByDate[date]) {
+          postsByDate[date] = [];
+        }
+        postsByDate[date].push(post);
+      } catch (error) {
+        console.error('Error processing post date:', error, 'Post:', post);
       }
-      postsByDate[date].push(post);
     });
     
-    // Create data points for each day in the month
-    const daysInMonth = eachDayOfInterval({
-      start: monthStart,
-      end: monthEnd,
+    // Create data points for each day in the date range
+    const daysInRange = eachDayOfInterval({
+      start: dateRange.start,
+      end: dateRange.end,
     });
     
-    return daysInMonth.map(date => {
+    return daysInRange.map(date => {
       const dateStr = format(date, 'yyyy-MM-dd');
       const dayPosts = postsByDate[dateStr] || [];
       
       return {
-        date: format(date, 'MMM d', { locale: es }),
+        date: format(date, timeRange === 'day' ? 'HH:mm' : timeRange === 'week' ? 'EEE' : 'MMM d', { locale: es }),
         likes: dayPosts.reduce((sum, post) => sum + (post.me_gusta || 0), 0),
         comments: dayPosts.reduce((sum, post) => sum + (post.comentarios || 0), 0),
         shares: dayPosts.reduce((sum, post) => sum + (post.compartidos || 0), 0),
       };
     });
-  };
-  
-  // Get top performing post
-  const getTopPost = () => {
-    if (posts.length === 0) return null;
+  }, [filteredPosts, dateRange, timeRange]);
+
+  // Calculate engagement metrics by post type
+  const engagementByType = useMemo(() => {
+    console.log('Calculating engagement by type for posts:', filteredPosts);
+    const types: Record<string, { count: number, likes: number, comments: number, shares: number, views: number }> = {};
     
-    return posts.reduce((topPost, post) => {
+    filteredPosts.forEach(post => {
+      const type = post.tipoContenido || 'sin_tipo';
+      if (!types[type]) {
+        types[type] = { count: 0, likes: 0, comments: 0, shares: 0, views: 0 };
+      }
+      
+      types[type].count += 1;
+      types[type].likes += post.me_gusta || 0;
+      types[type].comments += post.comentarios || 0;
+      types[type].shares += post.compartidos || 0;
+      types[type].views += post.vistas || 0;
+    });
+    
+    // Calculate averages
+    const result = Object.entries(types).map(([type, data]) => ({
+      type,
+      avgLikes: data.count > 0 ? Math.round((data.likes / data.count) * 10) / 10 : 0,
+      avgComments: data.count > 0 ? Math.round((data.comments / data.count) * 10) / 10 : 0,
+      avgShares: data.count > 0 ? Math.round((data.shares / data.count) * 10) / 10 : 0,
+      avgViews: data.count > 0 ? Math.round((data.views / data.count)) : 0,
+      postCount: data.count
+    }));
+    
+    console.log('Calculated engagement by type:', result);
+    return result;
+  }, [filteredPosts]);
+  
+  // Get top performing post (excluding shared posts)
+  const topPost = useMemo(() => {
+    const nonSharedPosts = filteredPosts.filter(post => post.tipoContenido !== 'compartida');
+    
+    if (nonSharedPosts.length === 0) return null;
+    
+    return nonSharedPosts.reduce((topPost, post) => {
       const engagement = (post.me_gusta || 0) + (post.comentarios || 0) + (post.compartidos || 0);
       const topEngagement = (topPost.me_gusta || 0) + (topPost.comentarios || 0) + (topPost.compartidos || 0);
       
       return engagement > topEngagement ? post : topPost;
-    }, posts[0]);
-  };
-  
-  const topPost = getTopPost();
+    }, nonSharedPosts[0]);
+  }, [filteredPosts]);
   
   // Format numbers for display
   const formatNumber = (num: number) => {
@@ -214,7 +431,7 @@ export default function OverviewPage() {
     return num.toString();
   };
   
-  // Render a metrics card
+  // Render a metrics card with shadcn/ui components
   const MetricsCard = ({ 
     title, 
     value, 
@@ -235,119 +452,190 @@ export default function OverviewPage() {
 
     if (loading) {
       return (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-4" />
+        <Card className="h-full">
+          <CardHeader className="p-4">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-4 rounded-full" />
+            </div>
+            <div className="space-y-2 mt-2">
+              <Skeleton className="h-7 w-3/4" />
+              <Skeleton className="h-3 w-full" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <Skeleton className="h-8 w-16 mb-2" />
-            <Skeleton className="h-4 w-32" />
-          </CardContent>
         </Card>
       );
     }
 
     return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
-          {icon && <div className="h-4 w-4 text-muted-foreground">{icon}</div>}
+      <Card className="h-full hover:shadow-md transition-shadow">
+        <CardHeader className="p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            {icon && (
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                {icon}
+              </div>
+            )}
+          </div>
+          <div className="mt-2">
+            <h3 className="text-2xl font-bold">{value}</h3>
+            {description && (
+              <div className="flex items-center gap-1 mt-1">
+                {!isNeutral ? (
+                  <Badge 
+                    variant={isPositive ? 'default' : 'destructive'}
+                    className="gap-1 text-xs h-5"
+                  >
+                    {isPositive ? (
+                      <TrendingUp className="h-3 w-3" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3" />
+                    )}
+                    {Math.abs(change).toFixed(1)}%
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="gap-1 text-xs h-5">
+                    <BarChart3 className="h-3 w-3" />
+                    {change}%
+                  </Badge>
+                )}
+                <span className="text-xs text-muted-foreground">
+                  {description}
+                </span>
+              </div>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{value}</div>
-          {description && (
-            <p className="text-xs text-muted-foreground">
-              {!isNeutral && (
-                <span
-                  className={`inline-flex items-center ${
-                    isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                  }`}
-                >
-                  {isPositive ? (
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3 mr-1" />
-                  )}
-                  {Math.abs(change).toFixed(1)}%
-                </span>
-              )}
-              {isNeutral && (
-                <span className="inline-flex items-center text-muted-foreground">
-                  <BarChart3 className="h-3 w-3 mr-1" />
-                  {change}%
-                </span>
-              )}{' '}
-              {description}
-            </p>
-          )}
-        </CardContent>
       </Card>
     );
   };
 
-  // Render a chart component
-  const EngagementChart = ({ data, loading = false }: { data: EngagementData[], loading?: boolean }) => {
-    if (loading) {
-      return <Skeleton className="h-64 w-full" />;
-    }
-
-    return (
-      <div className="h-64">
-        <div className="w-full h-full text-sm text-muted-foreground flex items-center justify-center">
-          Gráfico de interacción (se requiere implementar Recharts)
-        </div>
-      </div>
-    );
+  // Process engagement data for the activity chart
+  const processEngagementData = useCallback(() => {
+    const engagementByDate = new Map<string, {posts: number, interactions: number}>();
+    
+    filteredPosts.forEach(post => {
+      if (!post.fecha) return;
+      
+      const date = format(new Date(post.fecha), 'yyyy-MM-dd');
+      const current = engagementByDate.get(date) || { posts: 0, interactions: 0 };
+      
+      engagementByDate.set(date, {
+        posts: current.posts + 1,
+        interactions: current.interactions + (post.me_gusta || 0) + (post.comentarios || 0) + (post.compartidos || 0)
+      });
+    });
+    
+    // Fill in missing dates with zero values
+    const dateRangeInterval = eachDayOfInterval({
+      start: dateRange.start,
+      end: dateRange.end
+    });
+    
+    return dateRangeInterval.map(date => {
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const data = engagementByDate.get(dateStr) || { posts: 0, interactions: 0 };
+      
+      // Format date as DD/MM with proper spacing
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const formattedDate = `${day}/${month}`;
+      
+      return {
+        date: formattedDate,
+        posts: data.posts,
+        interactions: data.interactions
+      };
+    });
+  }, [filteredPosts, dateRange, timeRange]);
+  
+  // Helper function to generate random colors
+  const getRandomColor = () => {
+    const colors = [
+      '#3b82f6', // blue-500
+      '#10b981', // emerald-500
+      '#8b5cf6', // violet-500
+      '#f59e0b', // amber-500
+      '#ef4444', // red-500
+      '#06b6d4', // cyan-500
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
   };
 
-  // Render a pie chart component
-  const SentimentChart = ({ data, loading = false }: { data: SentimentData[], loading?: boolean }) => {
-    if (loading) {
-      return <Skeleton className="h-64 w-full" />;
+  // Prepare engagement data for the chart
+  const processEngagementMetrics = useCallback((): Array<{name: string; value: number; color: string}> => {
+    console.log('Processing engagement metrics for types:', engagementByType);
+    
+    if (!engagementByType || engagementByType.length === 0) {
+      console.log('No engagement data available');
+      return [];
     }
+    
+    // Calculate total engagement for each post type
+    return engagementByType.map(item => ({
+      name: item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1).replace('_', ' ') : 'Sin tipo',
+      value: (item.avgLikes || 0) + (item.avgComments || 0) + (item.avgShares || 0),
+      color: getRandomColor()
+    }));
+  }, [engagementByType]);
 
+  // Show error state
+  if (error) {
     return (
-      <div className="h-64">
-        <div className="w-full h-full text-sm text-muted-foreground flex items-center justify-center">
-          Gráfico de sentimiento (se requiere implementar Recharts)
-        </div>
+      <div className="container mx-auto p-6">
+        <ErrorFallback 
+          error={error} 
+          resetErrorBoundary={() => window.location.reload()} 
+        />
       </div>
     );
-  };
+  }
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
+    <div className="container mx-auto p-4 sm:p-6 space-y-6">
       <div className="flex flex-col space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Resumen</h2>
+        <h1 className="text-3xl font-bold tracking-tight">Resumen</h1>
         <p className="text-muted-foreground">
           Visión general del rendimiento de tus publicaciones
         </p>
       </div>
 
       {/* Time Range Selector */}
-      <div className="flex space-x-2">
-        <Button
-          variant={timeRange === 'day' ? 'default' : 'outline'}
-          onClick={() => setTimeRange('day')}
-          size="sm"
+      <div className="flex items-center gap-4">
+        <Select
+          value={timeRange}
+          onValueChange={(value) => setTimeRange(value as 'day' | 'week' | 'month')}
         >
-          Hoy
-        </Button>
-        <Button
-          variant={timeRange === 'week' ? 'default' : 'outline'}
-          onClick={() => setTimeRange('week')}
-          size="sm"
-        >
-          Esta semana
-        </Button>
-        <Button
-          variant={timeRange === 'month' ? 'default' : 'outline'}
-          onClick={() => setTimeRange('month')}
-          size="sm"
-        >
-          Este mes
-        </Button>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Seleccionar período" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="day">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4" />
+                Hoy
+              </div>
+            </SelectItem>
+            <SelectItem value="week">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4" />
+                Esta semana
+              </div>
+            </SelectItem>
+            <SelectItem value="month">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4" />
+                Este mes
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Date Range Info */}
+      <div className="text-sm text-muted-foreground">
+        Mostrando datos del {format(dateRange.start, 'dd/MM/yyyy')} al {format(dateRange.end, 'dd/MM/yyyy')}
       </div>
 
       {/* Metrics Grid */}
@@ -356,8 +644,8 @@ export default function OverviewPage() {
           title="Publicaciones"
           value={loading ? '...' : metrics.totalPosts}
           change={metrics.postsChange}
-          description="respecto al mes pasado"
-          icon={<CalendarDays className="h-4 w-4" />}
+          description={`respecto al ${timeRange === 'day' ? 'día' : timeRange === 'week' ? 'semana' : 'mes'} anterior`}
+          icon={<CalendarDays className="h-4 w-4 text-primary" />}
           loading={loading}
         />
         <MetricsCard
@@ -365,7 +653,7 @@ export default function OverviewPage() {
           value={loading ? '...' : formatNumber(metrics.totalReach)}
           change={metrics.reachChange}
           description="personas alcanzadas"
-          icon={<Eye className="h-4 w-4" />}
+          icon={<Eye className="h-4 w-4 text-primary" />}
           loading={loading}
         />
         <MetricsCard
@@ -373,7 +661,7 @@ export default function OverviewPage() {
           value={loading ? '...' : formatNumber(metrics.totalEngagement)}
           change={metrics.engagementChange}
           description="interacciones totales"
-          icon={<ThumbsUp className="h-4 w-4" />}
+          icon={<ThumbsUp className="h-4 w-4 text-primary" />}
           loading={loading}
         />
         <MetricsCard
@@ -381,75 +669,132 @@ export default function OverviewPage() {
           value={loading ? '...' : metrics.avgEngagement}
           change={metrics.avgEngagementChange}
           description="por publicación"
-          icon={<BarChart3 className="h-4 w-4" />}
+          icon={<BarChart3 className="h-4 w-4 text-primary" />}
           loading={loading}
         />
       </div>
 
       {/* Charts Row */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Actividad de Publicaciones</CardTitle>
-            <CardDescription>Interacción diaria en el período seleccionado</CardDescription>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <EngagementChart data={engagementData} loading={loading} />
-          </CardContent>
-        </Card>
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Sentimiento del Público</CardTitle>
-            <CardDescription>Distribución de sentimientos en las publicaciones</CardDescription>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <SentimentChart data={sentimentData} loading={loading} />
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-7">
+        <div className="lg:col-span-4">
+          <ActivityChart 
+            data={processEngagementData()} 
+            className={loading ? 'opacity-50 pointer-events-none' : ''}
+            timeRange={timeRange}
+          />
+        </div>
+        <div className="lg:col-span-3">
+          {loading ? (
+            <div className="opacity-50 pointer-events-none">
+              <EngagementMetricsChartSkeleton />
+            </div>
+          ) : (
+            <EngagementMetricsChart 
+              data={processEngagementMetrics()}
+            />
+          )}
+        </div>
       </div>
 
       {/* Top Performing Post */}
       <Card>
         <CardHeader>
           <CardTitle>Publicación Destacada</CardTitle>
-          <CardDescription>La publicación con mayor interacción este mes</CardDescription>
+          <CardDescription>La publicación con mayor interacción en el período seleccionado</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="space-y-4">
+              <Skeleton className="h-48 w-full rounded-lg" />
               <Skeleton className="h-6 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
-              <div className="flex space-x-4 pt-2">
+              <div className="flex gap-4 pt-2">
                 <Skeleton className="h-4 w-16" />
                 <Skeleton className="h-4 w-16" />
                 <Skeleton className="h-4 w-16" />
               </div>
             </div>
           ) : topPost ? (
-            <div>
-              <h3 className="text-lg font-medium">Publicación con mayor interacción</h3>
-              <p className="text-muted-foreground mt-1 line-clamp-2">
-                {topPost.texto || 'Sin contenido'}
-              </p>
-              <div className="flex items-center space-x-6 mt-4 text-sm text-muted-foreground">
-                <div className="flex items-center">
-                  <ThumbsUp className="h-4 w-4 mr-1" />
-                  <span>{topPost.me_gusta || 0} Me gusta</span>
-                </div>
-                <div className="flex items-center">
-                  <MessageSquare className="h-4 w-4 mr-1" />
-                  <span>{topPost.comentarios || 0} Comentarios</span>
-                </div>
-                <div className="flex items-center">
-                  <Share2 className="h-4 w-4 mr-1" />
-                  <span>{topPost.compartidos || 0} Compartidas</span>
-                </div>
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Post Content */}
+              <div className="flex-1">
+                <h3 className="text-lg font-medium">
+                  Publicación con mayor interacción
+                </h3>
+                <p className="text-muted-foreground mt-1 line-clamp-5">
+                  {topPost.texto || 'Sin contenido'}
+                </p>
+                
+                {topPost.url_publicacion && (
+                  <div className="mt-3">
+                    <Button asChild variant="default" size="sm">
+                      <a 
+                        href={topPost.url_publicacion}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Ver publicación en Facebook
+                      </a>
+                    </Button>
+                  </div>
+                )}
               </div>
+              
+              {/* Post Thumbnail */}
+              <div className="w-full md:w-48 flex-shrink-0">
+                {topPost.image_base64 ? (
+                  <div className="relative aspect-square w-full overflow-hidden rounded-lg border bg-muted">
+                    <img 
+                      src={`data:image/jpeg;base64,${topPost.image_base64}`}
+                      alt="Miniatura de la publicación"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex aspect-square w-full items-center justify-center rounded-lg border bg-muted text-muted-foreground">
+                    <span className="text-xs text-center p-2">Sin imagen</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Engagement Metrics - Only show for non-shared posts */}
+              {topPost.tipoContenido !== 'compartida' && (
+                <div className="space-y-2 min-w-[200px]">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Me gusta</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{topPost.me_gusta || 0}</span>
+                      <ThumbsUp className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <Progress value={Math.min((topPost.me_gusta || 0) / 100 * 100, 100)} className="h-2" />
+                  
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Comentarios</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{topPost.comentarios || 0}</span>
+                      <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <Progress value={Math.min((topPost.comentarios || 0) / 50 * 100, 100)} className="h-2" />
+                  
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Compartidas</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{topPost.compartidos || 0}</span>
+                      <Share2 className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <Progress value={Math.min((topPost.compartidos || 0) / 25 * 100, 100)} className="h-2" />
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="text-muted-foreground">No hay datos de publicaciones para mostrar</p>
+              <p className="text-muted-foreground">No hay datos de publicaciones para mostrar en este período</p>
             </div>
           )}
         </CardContent>
