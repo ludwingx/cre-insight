@@ -254,32 +254,17 @@ export default function ExtractedPostsPage() {
                     const toastId = toast.loading('Extrayendo nuevas publicaciones de Facebook...');
                     
                     try {
-                      const requestBody = {
-                        action: 'start_scraping',
-                        timestamp: new Date().toISOString()
-                      };
-                      
-                      const response = await fetch('https://intelexia-labs-n8n.af9gwe.easypanel.host/webhook-test/creinsights', {
+                      const response = await fetch('/api/scrape', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
-                          'Accept': 'application/json'
                         },
-                        body: JSON.stringify(requestBody)
                       });
                       
-                      let responseData;
-                      try {
-                        responseData = await response.json();
-                      } catch (e) {
-                        responseData = await response.text();
-                      }
+                      const responseData = await response.json();
                       
                       if (!response.ok) {
-                        const errorMessage = typeof responseData === 'object' && responseData.message 
-                          ? responseData.message 
-                          : response.statusText;
-                        
+                        const errorMessage = responseData.error || response.statusText || 'Error desconocido al iniciar el scraping';
                         throw new Error(`Error del servidor (${response.status}): ${errorMessage}`);
                       }
                       
