@@ -251,7 +251,7 @@ export default function ExtractedPostsPage() {
                   variant="default" 
                   size="sm" 
                   onClick={async () => {
-                    const toastId = toast.loading('Extrayendo nuevas publicaciones de Facebook...');
+                    const toastId = toast.loading('Extrayendo nuevas publicaciones...');
                     
                     try {
                       const response = await fetch('/api/scrape', {
@@ -260,24 +260,40 @@ export default function ExtractedPostsPage() {
                           'Content-Type': 'application/json',
                         },
                       });
-                      
-                      const responseData = await response.json();
-                      
+
+                      // Handle non-OK responses
                       if (!response.ok) {
-                        const errorMessage = responseData.error || response.statusText || 'Error desconocido al iniciar el scraping';
+                        let errorMessage = 'Error al iniciar el scraping';
+                        try {
+                          const errorData = await response.json();
+                          errorMessage = errorData.error || errorMessage;
+                        } catch (e) {
+                          errorMessage = response.statusText || errorMessage;
+                        }
                         throw new Error(`Error del servidor (${response.status}): ${errorMessage}`);
                       }
-                      
-                      toast.success('Extracción finalizada correctamente', { id: toastId });
-                      
-                      if (dateRange?.from) {
-                        await fetchPosts(dateRange.from, dateRange.to || dateRange.from);
+
+                      // Try to parse the response as JSON, but handle non-JSON responses
+                      try {
+                        const responseData = await response.json();
+                        console.log('Scraping response:', responseData);
+                      } catch (e) {
+                        console.log('Received non-JSON response, treating as success');
                       }
+                      
+                      toast.success('Extracción iniciada correctamente', { id: toastId });
+                      
+                      // Refresh the posts after a short delay
+                      setTimeout(() => {
+                        if (dateRange?.from) {
+                          fetchPosts(dateRange.from, dateRange.to || dateRange.from);
+                        }
+                      }, 5000);
                       
                     } catch (error) {
                       console.error('Error al iniciar scraping:', error);
                       toast.error(
-                        `Error al iniciar el scraping: ${error instanceof Error ? error.message : 'Error desconocido'}`, 
+                        `Error: ${error instanceof Error ? error.message : 'Error desconocido al iniciar el scraping'}`, 
                         { id: toastId }
                       );
                     }
