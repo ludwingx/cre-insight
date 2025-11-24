@@ -60,7 +60,7 @@ export function AppSidebar({
   user?: { name: string; email: string; avatar: string };
 }) {
   return (
-    <Sidebar collapsible="icon" className="bg-primary flex flex-col" {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <div className="flex flex-col h-full">
         <SidebarHeader className="border-b border-primary-foreground/10">
           <TeamSwitcher teams={data.teams} />

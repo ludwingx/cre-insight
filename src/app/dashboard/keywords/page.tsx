@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 
 type Keyword = {
   id: number;
@@ -247,7 +246,7 @@ export default function KeywordsPage() {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="space-y-1">
                   <CardTitle>
-                    {showInactive ? 'Palabras Clave Inactivas' : 'Palabras Clave'}
+                    {showInactive ? 'Palabras Clave Inactivas' : 'Palabras Clave Activas'}
                   </CardTitle>
                   <CardDescription>
                     {filteredKeywords.length} {filteredKeywords.length === 1 ? 'palabra clave' : 'palabras clave'} {showInactive ? 'inactivas' : 'activas'}

@@ -24,8 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { DateRange } from "react-day-picker";
+import { DateRangePicker, type DateRange } from "@/components/ui/date-range-picker";
 import { getCurrentMonthRange } from "@/lib/date-utils";
 import { toast } from "sonner";
 
@@ -276,37 +275,7 @@ export default function NegativesPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
-        <div className="flex items-center gap-2">
-          <SidebarTrigger className="-ml-1" />
-          <Separator
-            orientation="vertical"
-            className="mr-2 data-[orientation=vertical]:h-4"
-          />
-          <Breadcrumb className="truncate">
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink href="#">Reputación</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink href="#">Menciones Negativas</BreadcrumbLink>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
-        <div className="flex items-center h-full py-2">
-          <img
-            src="https://www.cre.com.bo/wp-content/uploads/2024/10/logo-cre-fb.jpg"
-            alt="CRE Logo"
-            className="h-full w-auto object-contain"
-          />
-        </div>
-      </header>
+
 
       <main className="flex-1 p-4 md:p-6">
         <div className="flex flex-col space-y-6">

@@ -42,58 +42,27 @@ import {
 
 export default async function Page() {
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Header */}
-      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-        <div className="flex items-center w-full gap-2 px-4">
-          <div className="flex items-center gap-2 flex-grow min-w-0">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <Breadcrumb className="truncate">
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">Dashboard</BreadcrumbLink>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-
-          <div className="flex items-center justify-end w-full">
-            <div className="bg-white p-2">
-              <img
-                className="h-12 w-auto object-contain"
-                src="https://www.somare.com/wp-content/uploads/2020/02/logo-cre.jpg"
-                alt="Logo C.R.E."
-              />
-            </div>
-          </div>
+    <div className="flex flex-1 flex-col items-center justify-center min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background to-muted/20">
+      <div className="flex flex-col items-center gap-6 w-full max-w-2xl px-6 text-center animate-in fade-in zoom-in duration-500">
+        {/* Logo */}
+        <div className="relative w-40 h-40 md:w-48 md:h-48 mb-4 drop-shadow-xl">
+          <img
+            className="w-full h-full object-contain"
+            src="https://www.somare.com/wp-content/uploads/2020/02/logo-cre.jpg"
+            alt="Logo C.R.E."
+          />
         </div>
-      </header>
 
-      {/* Main */}
-      <main className="flex flex-col min-h-[60vh] pr-36 w-full items-center justify-center from-white via-white to-slate-100 py-8">
-        <div className="flex flex-col items-center gap-3 w-full max-w-2xl px-6">
-          {/* Logo */}
-          <div className="flex items-center justify-center mt-2 mb-4">
-            <img
-              className="w-32 h-auto object-contain"
-              src="https://www.somare.com/wp-content/uploads/2020/02/logo-cre.jpg"
-              alt="Logo C.R.E."
-            />
-          </div>
-
-          {/* Títulos */}
-          <h1 className="text-2xl md:text-4xl font-extrabold text-[#2c5d5a] mb-1 tracking-tight text-center">
-            ¡Bienvenido al panel de <span className="text-gray-900">C.R.E. Insights</span>!
+        {/* Títulos */}
+        <div className="space-y-4">
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-primary">
+            C.R.E. <span className="text-foreground">Insights</span>
           </h1>
-          <h2 className="text-sm md:text-lg text-gray-600 mb-4 font-medium text-center">
-            Selecciona una sección del menú lateral para comenzar a explorar los datos y herramientas de reputación y monitoreo de menciones.
-          </h2>
+          <p className="text-base md:text-xl text-muted-foreground max-w-lg mx-auto leading-relaxed">
+            Bienvenido al panel de control. Selecciona una opción del menú lateral para monitorear métricas, gestionar la reputación y analizar tendencias.
+          </p>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
