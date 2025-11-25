@@ -14,14 +14,15 @@ interface PostMetric {
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string; redsocial?: string } }
+  { params }: { params: Promise<{ id: string; redsocial?: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     // Si el parámetro es un número => buscar por ID
-    const postId = parseInt(params.id, 10);
+    const postId = parseInt(resolvedParams.id, 10);
 
     // Si el parámetro no es un número => puede ser una red social
-    const redsocialParam = params.redsocial || (!isNaN(postId) ? null : params.id);
+    const redsocialParam = resolvedParams.redsocial || (!isNaN(postId) ? null : resolvedParams.id);
 
     // Si es por ID
     if (!isNaN(postId)) {
@@ -36,7 +37,7 @@ export async function GET(
           me_gusta: true,
           comentarios: true,
           compartidos: true,
-          image_base64: true,
+          url_image: true,
           url_publicacion: true,
           seguimiento: true,
           tipoContenido: true,
@@ -126,7 +127,7 @@ export async function GET(
           likes: postData.me_gusta,
           comentarios: postData.comentarios,
           compartidos: postData.compartidos,
-          url_imagen: postData.image_base64 || null,
+          url_imagen: postData.url_image || null,
           url_publicacion: postData.url_publicacion,
           seguimiento: postData.seguimiento,
           tipoContenido: postData.tipoContenido,
@@ -163,7 +164,7 @@ export async function GET(
           me_gusta: true,
           comentarios: true,
           compartidos: true,
-          image_base64: true,
+          url_image: true,
           url_publicacion: true,
           created_at: true,
           updated_at: true,
@@ -206,10 +207,11 @@ interface PatchRequest {
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const postId = parseInt(params.id, 10);
+    const resolvedParams = await params;
+    const postId = parseInt(resolvedParams.id, 10);
     
     if (isNaN(postId)) {
       return NextResponse.json(

@@ -5,8 +5,6 @@ import {
   format, 
   startOfMonth, 
   endOfMonth, 
-  startOfWeek, 
-  endOfWeek, 
   startOfDay, 
   endOfDay,
   subMonths, 
@@ -16,11 +14,10 @@ import {
   isWithinInterval 
 } from "date-fns";
 import { es } from "date-fns/locale";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarDays, MessageSquare, ThumbsUp, Share2, AlertCircle, BarChart3, Eye, TrendingUp, TrendingDown, RefreshCw, ExternalLink } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ActivityChart } from "@/components/dashboard/charts/activity-chart";
@@ -40,7 +37,7 @@ interface Post {
   timestamp?: number;
   hashtags: string[];
   tiene_imagen: boolean;
-  image_base64?: string;
+  url_image?: string;
   url_publicacion: string;
   seguimiento: boolean;
   tipoContenido: string;
@@ -54,12 +51,6 @@ interface EngagementData {
   likes: number;
   comments: number;
   shares: number;
-}
-
-interface SentimentData {
-  name: string;
-  value: number;
-  color: string;
 }
 
 interface DateRange {
@@ -86,11 +77,88 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetError
   );
 }
 
+// Función para normalizar tipos de contenido
+const normalizeContentType = (contentType: string): string => {
+  if (!contentType) return 'Otro';
+  
+  const normalized = contentType.toLowerCase().trim();
+  
+  // Mapeo de tipos equivalentes
+  const typeMap: Record<string, string> = {
+    'image': 'Imagen',
+    'imagen': 'Imagen',
+    'photo': 'Imagen',
+    'foto': 'Imagen',
+    'video': 'Video',
+    'vídeo': 'Video',
+    'sidecar': 'Sidecar',
+    'carousel': 'Sidecar',
+    'text': 'Texto',
+    'texto': 'Texto',
+    'link': 'Enlace',
+    'enlace': 'Enlace',
+    'shared': 'Compartida',
+    'compartida': 'Compartida',
+    'reel': 'Reel',
+    'story': 'Story'
+  };
+  
+  return typeMap[normalized] || contentType.charAt(0).toUpperCase() + contentType.slice(1).toLowerCase();
+};
+
+// Colores fijos para tipos de contenido comunes
+const CONTENT_TYPE_COLORS: Record<string, string> = {
+  'Imagen': '#3b82f6',      // blue-500
+  'Video': '#ef4444',       // red-500
+  'Sidecar': '#8b5cf6',     // violet-500
+  'Texto': '#10b981',       // emerald-500
+  'Enlace': '#f59e0b',      // amber-500
+  'Compartida': '#6b7280',  // gray-500
+  'Reel': '#ec4899',        // pink-500
+  'Story': '#06b6d4',       // cyan-500
+  'Otro': '#84cc16'         // lime-500
+};
+
+// Normaliza nombres de plataforma a valores canónicos en minúsculas
+const normalizePlatform = (platform?: string): string => {
+  const p = (platform || '').toLowerCase().trim();
+  if (!p) return 'facebook';
+  if (p === 'fb' || p.includes('face')) return 'facebook';
+  if (p === 'ig' || p.includes('insta')) return 'instagram';
+  if (p === 'tt' || p.includes('tiktok')) return 'tiktok';
+  return p;
+};
+
+// Deriva la plataforma a partir del dominio del URL
+const derivePlatformFromUrl = (url?: string): string | null => {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    if (host.includes('tiktok.com')) return 'tiktok';
+    if (host.includes('instagram.com')) return 'instagram';
+    if (host.includes('facebook.com') || host.includes('fb.watch')) return 'facebook';
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+// Helper to display platform name nicely in Spanish
+const getPlatformDisplay = (platform?: string): string => {
+  const p = (platform || '').toLowerCase().trim();
+  // Comparar SIEMPRE en minúsculas porque p ya está en lower-case
+  if (p === 'instagram' || p.includes('insta') || p === 'ig') return 'Instagram';
+  if (p === 'tiktok' || p === 'tt' || p.includes('tiktok')) return 'TikTok';
+  if (p === 'facebook' || p === 'fb' || p.includes('face')) return 'Facebook';
+  // Fallback if unknown
+  return 'la red social';
+};
+
 export default function OverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [allPosts, setAllPosts] = useState<Post[]>([]); // Store all posts for filtering
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [timeRange, setTimeRange] = useState<'day' | 'week' | 'month'>('month');
   
   // Calculate date ranges based on timeRange
@@ -107,9 +175,9 @@ export default function OverviewPage() {
         };
       case 'week':
         return {
-          start: startOfDay(subDays(now, 6)), // Last 7 days including today
+          start: startOfDay(subDays(now, 6)),
           end: endOfDay(now),
-          previousStart: startOfDay(subDays(now, 13)), // Previous 7 days
+          previousStart: startOfDay(subDays(now, 13)),
           previousEnd: endOfDay(subDays(now, 7))
         };
       case 'month':
@@ -158,14 +226,21 @@ export default function OverviewPage() {
     try {
       const postDate = post.fecha || post.fechapublicacion || post.created_at || new Date().toISOString();
       const normalizedDate = new Date(postDate).toISOString();
-      const hasImage = Boolean(post.tiene_imagen || post.image_base64 || post.image);
+      const hasImage = Boolean(post.tiene_imagen || post.url_image || post.image);
       const postId = post.id || Math.floor(Math.random() * 10000);
       const postPublicId = post.id_publicacion || post.id || String(Math.random().toString(36).substr(2, 9));
+      
+      // Normalizar el tipo de contenido
+      const rawContentType = post.tipoContenido || (hasImage ? 'imagen' : 'texto');
+      const normalizedContentType = normalizeContentType(rawContentType);
+      
+      // Resolver URL y usar plataforma EXACTA desde la columna (sin normalizar)
+      const permalink: string = post.url_publicacion || post.url || post.permalink_url || `https://facebook.com/${postPublicId}`;
       
       return {
         id: postId,
         id_publicacion: postPublicId,
-        plataforma: post.plataforma || 'facebook',
+        plataforma: post.plataforma || post.redsocial || '',
         texto: post.texto || post.contenido || '',
         me_gusta: Number(post.me_gusta || post.likes || 0),
         comentarios: Number(post.comentarios || post.comments || 0),
@@ -174,10 +249,10 @@ export default function OverviewPage() {
         timestamp: post.timestamp ? Number(post.timestamp) : Math.floor(new Date(normalizedDate).getTime() / 1000),
         hashtags: Array.isArray(post.hashtags) ? post.hashtags : [],
         tiene_imagen: hasImage,
-        image_base64: post.image_base64 || post.image || undefined,
-        url_publicacion: post.url_publicacion || post.url || post.permalink_url || `https://facebook.com/${postPublicId}`,
+        url_image: post.url_image || post.image || undefined,
+        url_publicacion: permalink,
         seguimiento: post.seguimiento !== undefined ? Boolean(post.seguimiento) : true,
-        tipoContenido: post.tipoContenido || (hasImage ? 'imagen' : 'texto'),
+        tipoContenido: normalizedContentType,
         vistas: Number(post.vistas || post.views || 0),
         created_at: post.created_at || normalizedDate,
         updated_at: post.updated_at || normalizedDate
@@ -214,7 +289,7 @@ export default function OverviewPage() {
     try {
       const fields = [
         'id', 'id_publicacion', 'plataforma', 'texto', 'me_gusta', 'comentarios', 'compartidos',
-        'fecha', 'timestamp', 'hashtags', 'tiene_imagen', 'image_base64', 'url_publicacion',
+        'fecha', 'timestamp', 'hashtags', 'tiene_imagen', 'url_image', 'url_publicacion',
         'seguimiento', 'tipoContenido', 'vistas', 'created_at', 'updated_at', 'url', 'permalink_url',
         'likes', 'comments', 'shares', 'views', 'fechapublicacion', 'contenido', 'type', 'image'
       ];
@@ -235,7 +310,14 @@ export default function OverviewPage() {
         return [];
       }
       
-      return data.posts.map(normalizePost);
+      const normalized = data.posts.map(normalizePost);
+      try {
+        const platformsSample = normalized.slice(0, 10).map((p: Post) => ({ id: p.id_publicacion, plataforma: p.plataforma }));
+        console.log('[OverviewPage] Normalized posts (sample) plataformas:', platformsSample);
+      } catch (e) {
+        console.log('[OverviewPage] Debug platforms log failed', e);
+      }
+      return normalized;
     } catch (error) {
       console.error(`Error in fetchPosts:`, error);
       throw error;
@@ -338,49 +420,13 @@ export default function OverviewPage() {
     return calculateMetrics(filteredPosts, previousPeriodPosts);
   }, [filteredPosts, previousPeriodPosts, calculateMetrics]);
 
-  // Prepare engagement data for the chart
-  const engagementData = useMemo((): EngagementData[] => {
-    const postsByDate: Record<string, Post[]> = {};
-    
-    filteredPosts.forEach(post => {
-      try {
-        if (!post.fecha) return;
-        const date = format(new Date(post.fecha), 'yyyy-MM-dd');
-        if (!postsByDate[date]) {
-          postsByDate[date] = [];
-        }
-        postsByDate[date].push(post);
-      } catch (error) {
-        console.error('Error processing post date:', error, 'Post:', post);
-      }
-    });
-    
-    // Create data points for each day in the date range
-    const daysInRange = eachDayOfInterval({
-      start: dateRange.start,
-      end: dateRange.end,
-    });
-    
-    return daysInRange.map(date => {
-      const dateStr = format(date, 'yyyy-MM-dd');
-      const dayPosts = postsByDate[dateStr] || [];
-      
-      return {
-        date: format(date, timeRange === 'day' ? 'HH:mm' : timeRange === 'week' ? 'EEE' : 'MMM d', { locale: es }),
-        likes: dayPosts.reduce((sum, post) => sum + (post.me_gusta || 0), 0),
-        comments: dayPosts.reduce((sum, post) => sum + (post.comentarios || 0), 0),
-        shares: dayPosts.reduce((sum, post) => sum + (post.compartidos || 0), 0),
-      };
-    });
-  }, [filteredPosts, dateRange, timeRange]);
-
-  // Calculate engagement metrics by post type
+  // Calculate engagement metrics by post type (con tipos normalizados)
   const engagementByType = useMemo(() => {
     console.log('Calculating engagement by type for posts:', filteredPosts);
     const types: Record<string, { count: number, likes: number, comments: number, shares: number, views: number }> = {};
     
     filteredPosts.forEach(post => {
-      const type = post.tipoContenido || 'sin_tipo';
+      const type = post.tipoContenido;
       if (!types[type]) {
         types[type] = { count: 0, likes: 0, comments: 0, shares: 0, views: 0 };
       }
@@ -408,7 +454,7 @@ export default function OverviewPage() {
   
   // Get top performing post (excluding shared posts)
   const topPost = useMemo(() => {
-    const nonSharedPosts = filteredPosts.filter(post => post.tipoContenido !== 'compartida');
+    const nonSharedPosts = filteredPosts.filter(post => post.tipoContenido !== 'Compartida');
     
     if (nonSharedPosts.length === 0) return null;
     
@@ -419,6 +465,25 @@ export default function OverviewPage() {
       return engagement > topEngagement ? post : topPost;
     }, nonSharedPosts[0]);
   }, [filteredPosts]);
+  
+  // Log topPost details to debug platform/display mismatch
+  useEffect(() => {
+    if (topPost) {
+      try {
+        console.log('[OverviewPage] topPost debug:', {
+          id: topPost.id_publicacion,
+          plataforma_raw: topPost.plataforma,
+          plataforma_display: getPlatformDisplay(topPost.plataforma),
+          url_publicacion: topPost.url_publicacion,
+          tipoContenido: topPost.tipoContenido,
+        });
+      } catch (e) {
+        console.log('[OverviewPage] topPost debug failed', e);
+      }
+    } else {
+      console.log('[OverviewPage] No topPost available for current range');
+    }
+  }, [topPost]);
   
   // Format numbers for display
   const formatNumber = (num: number) => {
@@ -550,20 +615,7 @@ export default function OverviewPage() {
     });
   }, [filteredPosts, dateRange, timeRange]);
   
-  // Helper function to generate random colors
-  const getRandomColor = () => {
-    const colors = [
-      '#3b82f6', // blue-500
-      '#10b981', // emerald-500
-      '#8b5cf6', // violet-500
-      '#f59e0b', // amber-500
-      '#ef4444', // red-500
-      '#06b6d4', // cyan-500
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
-  };
-
-  // Prepare engagement data for the chart
+  // Prepare engagement data for the chart with colores consistentes
   const processEngagementMetrics = useCallback((): Array<{name: string; value: number; color: string}> => {
     console.log('Processing engagement metrics for types:', engagementByType);
     
@@ -574,9 +626,9 @@ export default function OverviewPage() {
     
     // Calculate total engagement for each post type
     return engagementByType.map(item => ({
-      name: item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1).replace('_', ' ') : 'Sin tipo',
+      name: item.type,
       value: (item.avgLikes || 0) + (item.avgComments || 0) + (item.avgShares || 0),
-      color: getRandomColor()
+      color: CONTENT_TYPE_COLORS[item.type] || CONTENT_TYPE_COLORS['Otro']
     }));
   }, [engagementByType]);
 
@@ -735,7 +787,7 @@ export default function OverviewPage() {
                         className="inline-flex items-center gap-2"
                       >
                         <ExternalLink className="h-4 w-4" />
-                        Ver publicación en Facebook
+                        {`Ver publicación en ${(topPost.plataforma ?? '').trim() || 'Plataforma'}`}
                       </a>
                     </Button>
                   </div>
@@ -744,10 +796,10 @@ export default function OverviewPage() {
               
               {/* Post Thumbnail */}
               <div className="w-full md:w-48 flex-shrink-0">
-                {topPost.image_base64 ? (
+                {topPost.url_image ? (
                   <div className="relative aspect-square w-full overflow-hidden rounded-lg border bg-muted">
                     <img 
-                      src={`data:image/jpeg;base64,${topPost.image_base64}`}
+                      src={topPost.url_image}
                       alt="Miniatura de la publicación"
                       className="h-full w-full object-cover"
                     />
@@ -760,7 +812,7 @@ export default function OverviewPage() {
               </div>
               
               {/* Engagement Metrics - Only show for non-shared posts */}
-              {topPost.tipoContenido !== 'compartida' && (
+              {topPost.tipoContenido !== 'Compartida' && (
                 <div className="space-y-2 min-w-[200px]">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Me gusta</span>

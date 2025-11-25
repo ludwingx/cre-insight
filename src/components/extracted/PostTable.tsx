@@ -338,7 +338,7 @@ export function PostTable({ posts }: { posts: Post[] }) {
                               onError={() => handleImageError(post.id)}
                               onLoad={() => handleImageLoad(post.id)}
                               loading="lazy"
-                              crossOrigin="anonymous"
+
                               referrerPolicy="no-referrer"
                             />
                           </button>

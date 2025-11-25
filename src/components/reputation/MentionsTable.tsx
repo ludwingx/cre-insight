@@ -8,41 +8,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Image as ImageIcon, Facebook, Instagram, Twitter, Youtube } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
-// Función para verificar si un string es una imagen base64 válida
-const isValidBase64Image = (str: string | null): boolean => {
+// Función para verificar si un string es una URL de imagen válida
+const isValidImageUrl = (str: string | null): boolean => {
   if (!str) return false;
   try {
-    // Verificar que el string no esté vacío
     const trimmed = str.trim();
     if (!trimmed) return false;
-    
-    // Verificar si ya incluye el prefijo data:image
-    if (trimmed.startsWith('data:image')) {
-      return true;
-    }
-    
-    // Verificar si es un base64 válido (versión más flexible)
-    // Eliminar posibles espacios en blanco y saltos de línea
-    const base64WithoutWhitespace = trimmed.replace(/\s/g, '');
-    return /^[A-Za-z0-9+/=]+$/.test(base64WithoutWhitespace);
+    // Simple check for URL or data URI
+    return trimmed.startsWith('http') || trimmed.startsWith('data:image');
   } catch (e) {
-    console.error('Error validando imagen base64:', e);
     return false;
   }
-};
-
-// Función para formatear correctamente la URL de la imagen
-const formatImageUrl = (base64: string | null): string | null => {
-  if (!base64) return null;
-  const trimmed = base64.trim();
-  
-  // Si ya tiene el prefijo data:image, devolverlo tal cual
-  if (trimmed.startsWith('data:image')) {
-    return trimmed;
-  }
-  
-  // Si no tiene el prefijo, asumir que es un base64 de imagen JPEG
-  return `data:image/jpeg;base64,${trimmed}`;
 };
 
 export type Mention = {
@@ -50,7 +26,7 @@ export type Mention = {
   id: number
   sourceName: string
   sourceUrl: string
-  image_base64: string | null
+  url_image: string | null
   platform: string
   content: string
   mentionUrl: string
@@ -102,9 +78,9 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
   if (mentions.length > 0) {
     console.log('Primera mención:', {
       id: mentions[0].id,
-      hasImage: !!mentions[0].image_base64,
-      imageType: mentions[0].image_base64 ? typeof mentions[0].image_base64 : 'none',
-      first50Chars: mentions[0].image_base64 ? mentions[0].image_base64.substring(0, 50) + '...' : 'none'
+      hasImage: !!mentions[0].url_image,
+      imageType: mentions[0].url_image ? typeof mentions[0].url_image : 'none',
+      first50Chars: mentions[0].url_image ? mentions[0].url_image.substring(0, 50) + '...' : 'none'
     })
   }
 
@@ -113,13 +89,13 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
     if (mentions.length > 0) {
       console.log('Menciones cargadas:', {
         total: mentions.length,
-        withImages: mentions.filter(m => m.image_base64).length,
+        withImages: mentions.filter(m => m.url_image).length,
         firstMention: {
           id: mentions[0].id,
-          hasImage: !!mentions[0].image_base64,
-          imageLength: mentions[0].image_base64?.length || 0,
-          imageType: mentions[0].image_base64 ? typeof mentions[0].image_base64 : 'none',
-          imageStartsWith: mentions[0].image_base64?.substring(0, 30) || 'N/A'
+          hasImage: !!mentions[0].url_image,
+          imageLength: mentions[0].url_image?.length || 0,
+          imageType: mentions[0].url_image ? typeof mentions[0].url_image : 'none',
+          imageStartsWith: mentions[0].url_image?.substring(0, 30) || 'N/A'
         }
       });
     }
@@ -185,10 +161,10 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
                 </TableCell>
                 <TableCell className="w-20 align-middle">
                   <div className="relative w-16 h-16 mx-auto">
-                    {isValidBase64Image(mention.image_base64) ? (
+                    {isValidImageUrl(mention.url_image) ? (
                       <div className="relative w-full h-full">
                         <img
-                          src={formatImageUrl(mention.image_base64) || ''}
+                          src={mention.url_image || ''}
                           alt={`Mencion de ${mention.sourceName}`}
                           className="w-full h-full object-cover rounded-md"
                           onError={(e) => {
@@ -205,7 +181,7 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
                       </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-md text-gray-400">
-                        {mention.image_base64 ? (
+                        {mention.url_image ? (
                           <span className="text-xs text-center p-2">
                             Formato de imagen no válido
                           </span>

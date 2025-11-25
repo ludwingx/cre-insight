@@ -231,7 +231,7 @@ function Sidebar({
         data-variant={variant}
         data-collapsible={collapsible}
         className={cn(
-          "group/sidebar relative flex h-full flex-col overflow-hidden bg-primary text-primary-foreground transition-[width,height] duration-200 ease-in-out",
+          "group/sidebar relative flex h-screen flex-col overflow-hidden bg-primary text-primary-foreground transition-[width,height] duration-200 ease-in-out",
           side === "right" ? "border-l" : "border-r",
           variant === "floating" && "rounded-lg border shadow-sm",
           // Adjust the padding for floating and inset variants.
@@ -403,6 +403,7 @@ function SidebarGroupLabel({
 
   return (
     <Comp
+      {...(props as any)}
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
@@ -424,6 +425,7 @@ function SidebarGroupAction({
 
   return (
     <Comp
+      {...(props as any)}
       data-slot="sidebar-group-action"
       data-sidebar="group-action"
       className={cn(
@@ -514,12 +516,12 @@ function SidebarMenuButton({
 
   const button = (
     <Comp
+      {...(props as any)}
       data-slot="sidebar-menu-button"
       data-sidebar="menu-button"
       data-size={size}
       data-active={isActive}
       className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
-      {...props}
     />
   )
 
@@ -559,6 +561,7 @@ function SidebarMenuAction({
 
   return (
     <Comp
+      {...(props as any)}
       data-slot="sidebar-menu-action"
       data-sidebar="menu-action"
       className={cn(
@@ -682,6 +685,7 @@ function SidebarMenuSubButton({
 
   return (
     <Comp
+      {...(props as any)}
       data-slot="sidebar-menu-sub-button"
       data-sidebar="menu-sub-button"
       data-size={size}

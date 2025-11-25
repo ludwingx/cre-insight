@@ -49,7 +49,7 @@ export default async function Home() {
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer s e tiene utilizando */}
         <footer className="mt-12 text-sm text-gray-400 text-center w-full">
           © {new Date().getFullYear()} Desarrollado por{" "}
           <span className="text-[#2c5d5a] font-semibold">Other Brain 🧠</span>

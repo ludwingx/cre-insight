@@ -385,31 +385,33 @@ export default function ExtractedPostsPage() {
             </div>
           </div>
 
-          {/* Posts Table */}
-          <div className="rounded-lg p-6 border">
-            {loading ? (
-              <div className="flex justify-center items-center h-32">
-                <p className="text-muted-foreground">Cargando publicaciones...</p>
-              </div>
-            ) : allPosts.length === 0 ? (
-              <div className="flex justify-center items-center h-32">
-                <p className="text-muted-foreground">No hay publicaciones en el rango de fechas seleccionado.</p>
-              </div>
-            ) : filteredPosts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-32 space-y-2">
-                <p className="text-muted-foreground">No se encontraron publicaciones con los filtros actuales.</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={clearFilters}
-                >
-                  Limpiar filtros
-                </Button>
-              </div>
-            ) : (
-              <PostTable posts={filteredPosts} />
-            )}
-          </div>
+{/* Posts Table */}
+<div className="rounded-lg p-4 border">
+  {loading ? (
+    <div className="flex justify-center items-center h-32">
+      <p className="text-muted-foreground">Cargando publicaciones...</p>
+    </div>
+  ) : allPosts.length === 0 ? (
+    <div className="flex justify-center items-center h-32">
+      <p className="text-muted-foreground">No hay publicaciones en el rango de fechas seleccionado.</p>
+    </div>
+  ) : filteredPosts.length === 0 ? (
+    <div className="flex flex-col items-center justify-center h-32 space-y-2">
+      <p className="text-muted-foreground">No se encontraron publicaciones con los filtros actuales.</p>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={clearFilters}
+      >
+        Limpiar filtros
+      </Button>
+    </div>
+  ) : (
+    <div className="max-h-[600px] overflow-hidden"> {/* ← Añade este contenedor */}
+      <PostTable posts={filteredPosts} />
+    </div>
+  )}
+</div>
         </div>
       </main>
     </div>

@@ -8,25 +8,35 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true, // Ignora errores de TypeScript durante el build
   },
   images: {
-    domains: [
-      "noticias-admin-panel.vercel.app",
-      "tuto-noticias-test.vercel.app",
-      "i.postimg.cc",
-      "placeholder.com",
-      'scontent.fgyd3-1.fna.fbcdn.net',
-      'scontent.xx.fbcdn.net',
-      'scontent.fbcb2-2.fna.fbcdn.net',
-      'scontent-atl3-3.xx.fbcdn.net',
-      'scontent-atl3-1.xx.fbcdn.net',
-      'scontent-atl3-2.xx.fbcdn.net',
-      'platform-lookaside.fbsbx.com',
-    ],
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'political-news-nextcloud.af9gwe.easypanel.host',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.easypanel.host',
+      },
       {
         protocol: 'https',
         hostname: '**',
       },
     ],
+  },
+
+  async headers() {
+    return [
+      {
+        // Match all API routes
+        source: '/api/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Credentials', value: 'true' },
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET,OPTIONS,PATCH,DELETE,POST,PUT' },
+          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version' },
+        ],
+      },
+    ];
   },
 };
 

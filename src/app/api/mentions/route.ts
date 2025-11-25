@@ -7,12 +7,12 @@ export async function GET() {
       orderBy: {
         publishedAt: 'desc',
       },
-      // Seleccionar solo los campos necesarios
+      // Seleccionar solo los campos necesarios 
       select: {
         id: true,
         sourceName: true,
         sourceUrl: true,
-        image_base64: true,
+        url_image: true,
         platform: true,
         content: true,
         mentionUrl: true,
@@ -27,9 +27,9 @@ export async function GET() {
     if (mentions.length > 0) {
       console.log('Primera mención en la API:', {
         id: mentions[0].id,
-        hasImage: !!mentions[0].image_base64,
-        imageLength: mentions[0].image_base64?.length || 0,
-        imageStartsWith: mentions[0].image_base64?.substring(0, 30) || 'N/A',
+        hasImage: !!mentions[0].url_image,
+        imageLength: mentions[0].url_image?.length || 0,
+        imageStartsWith: mentions[0].url_image?.substring(0, 30) || 'N/A',
       });
     }
 

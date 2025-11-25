@@ -3,9 +3,11 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
+
+// --------------------- MODELOS ---------------------
 
 model User {
   id        Int      @id @default(autoincrement())
@@ -20,7 +22,7 @@ model User {
 model Post {
   id               Int       @id @default(autoincrement())
   id_publicacion   String    @unique
-  plataforma       String    @default("facebook")
+  plataforma       String    
   fecha            DateTime
   timestamp        BigInt?   // Cambié a BigInt para timestamps grandes
   texto            String    @db.Text // Mejor para textos largos
@@ -29,10 +31,10 @@ model Post {
   compartidos      Int       @default(0)
   hashtags         String[]  
   tiene_imagen     Boolean   @default(false)
-  image_base64     String?   @db.Text // Almacena la imagen en formato base64
+  url_image        String?   @db.Text // Nueva columna para la URL de la imagen
   url_publicacion  String    @db.Text
   seguimiento      Boolean   @default(true)
-  tipoContenido    String    @default("imagen")// video, imagen o texto
+  tipoContenido    String    @default("imagen") // video, imagen o texto
   vistas           Int       @default(0)
   created_at       DateTime  @default(now())
   updated_at       DateTime  @updatedAt
@@ -49,25 +51,25 @@ model PostMetrics {
   views       Int?     @default(0) // Mantener opcional
   collectedAt DateTime @default(now())
   totalInteracciones Int? @default(0) // likes + comments + shares
-  engagementRate     Float? // Porcentaje de engagement
+  engagementRate     Float?          // Porcentaje de engagement
   tipoContenido      String? @default("imagen") // Para tracking histórico
-  
+
   @@index([postId, collectedAt])
-  @@map("post_metrics") // Opcional: nombre explícito
+  @@map("post_metrics") // nombre explícito de tabla
 }
 
 model Mention {
-  id               Int      @id @default(autoincrement())
-  sourceName       String   // nombre del perfil o grupo que menciona
-  sourceUrl        String   // enlace al perfil/grupo/post
-  image_base64     String?   @db.Text // Almacena la imagen en formato base64
-  platform         String   // Facebook, Instagram, TikTok
-  content          String
-  mentionUrl       String   @unique
-  razon_especifica String?  // "Crítica en grupo Facebook", "Posible falso positivo", etc.
-  comentario_principal String? // "Cre ladrones", "Contenido no relacionado", etc.
-  publishedAt      DateTime
-  collectedAt      DateTime @default(now())
+  id                   Int      @id @default(autoincrement())
+  sourceName           String   // nombre del perfil o grupo que menciona
+  sourceUrl            String   // enlace al perfil/grupo/post
+  url_image            String?  @db.Text // Almacena la URL de la imagen
+  platform             String   // Facebook, Instagram, TikTok
+  content              String
+  mentionUrl           String   @unique
+  razon_especifica     String?  // "Crítica en grupo Facebook", "Posible falso positivo", etc.
+  comentario_principal String?  // "Cría ladrones", "Contenido no relacionado", etc.
+  publishedAt          DateTime
+  collectedAt          DateTime @default(now())
 }
 
 model Keyword {
@@ -76,4 +78,17 @@ model Keyword {
   activa    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// --------------------- ENUMS (si los necesitas) ---------------------
+
+enum EstadoArticulo {
+  activo
+  inactivo
+}
+
+enum Rol {
+  admin
+  user
+  analyst
 }

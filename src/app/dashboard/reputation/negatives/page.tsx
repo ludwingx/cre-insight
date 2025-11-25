@@ -274,11 +274,9 @@ export default function NegativesPage() {
     sortBy !== "date-desc";
 
   return (
-    <div className="flex flex-col min-h-screen">
-
-
-      <main className="flex-1 p-4 md:p-6">
-        <div className="flex flex-col space-y-6">
+    <div className="flex flex-col h-full">
+      <main className="flex-1 p-4 md:p-6 overflow-hidden">
+        <div className="flex flex-col h-full space-y-6">
           {/* Header Section */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -490,8 +488,8 @@ export default function NegativesPage() {
             </div>
           </div>
 
-          {/* Mentions Table */}
-          <div className="rounded-lg p-6">
+          {/* Mentions Table - with flex-1 and overflow */}
+          <div className="flex-1 rounded-lg overflow-hidden">
             {loading ? (
               <div className="flex justify-center items-center h-32">
                 <p className="text-muted-foreground">Cargando menciones...</p>
@@ -536,7 +534,7 @@ export default function NegativesPage() {
                 </Button>
               </div>
             ) : (
-              <div className="min-w-full">
+              <div className="h-full overflow-auto">
                 <MentionsTable initialMentions={filteredMentions} />
               </div>
             )}
