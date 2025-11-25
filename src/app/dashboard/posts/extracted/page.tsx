@@ -80,8 +80,28 @@ export default function ExtractedPostsPage() {
         throw new Error('Formato de respuesta inesperado del servidor');
       }
       
-      setAllPosts(data.posts);
-      return data.posts;
+      // Normalize field names for table expectations
+      const normalized = data.posts.map((p: any) => {
+        return {
+          // Required by PostTable type
+          id: String(p.id ?? p.id_publicacion ?? crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)),
+          perfil: p.perfil ?? p.id_publicacion ?? '',
+          redsocial: p.redsocial ?? p.plataforma ?? '',
+          texto: p.texto ?? '',
+          fechapublicacion: p.fechapublicacion ?? p.fecha ?? new Date().toISOString(),
+          likes: p.likes ?? p.me_gusta ?? 0,
+          comentarios: p.comentarios ?? 0,
+          compartidos: p.compartidos ?? 0,
+          url_imagen: p.url_imagen ?? p.url_image ?? null,
+          url_publicacion: p.url_publicacion ?? '',
+          seguimiento: typeof p.seguimiento === 'boolean' ? p.seguimiento : true,
+          tipoContenido: p.tipoContenido ?? 'imagen',
+          vistas: p.vistas ?? 0,
+        } as Post;
+      });
+      
+      setAllPosts(normalized);
+      return normalized;
     } catch (error) {
       console.error('Error fetching posts:', error);
       toast.error(error instanceof Error ? error.message : 'Error al cargar las publicaciones');

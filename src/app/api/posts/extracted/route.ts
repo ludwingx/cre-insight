@@ -56,18 +56,28 @@ export async function GET(request: Request) {
     const posts = filteredPosts.map(post => ({
       id: post.id,
       id_publicacion: post.id_publicacion,
+      // Plataforma
       plataforma: post.plataforma,
-      redsocial: post.plataforma,
+      redsocial: post.plataforma, // alias legacy
+      // Texto
       texto: post.texto,
+      // Fechas (ambos nombres por compatibilidad)
       fecha: post.fecha,
+      fechapublicacion: post.fecha,
+      // Métricas (duplicadas para compatibilidad)
       me_gusta: post.me_gusta,
+      likes: post.me_gusta,
       comentarios: post.comentarios,
       compartidos: post.compartidos,
+      vistas: post.vistas,
+      // Medios (ambos nombres por compatibilidad)
       url_image: post.url_image,
+      url_imagen: post.url_image,
+      // Enlace
       url_publicacion: post.url_publicacion,
+      // Seguimiento y tipo
       seguimiento: post.seguimiento,
       tipoContenido: post.tipoContenido,
-      vistas: post.vistas
     }));
     
     return NextResponse.json({ posts });
