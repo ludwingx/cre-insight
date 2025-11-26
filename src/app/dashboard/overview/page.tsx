@@ -83,7 +83,7 @@ const normalizeContentType = (contentType: string): string => {
 
   const normalized = contentType.toLowerCase().trim();
 
-  // Mapeo de tipos equivalentes
+  // Mapeo de tipos equivalentes - CAMBIO AQUÍ: "sidecar" y "carousel" ahora son "Carrousel"
   const typeMap: Record<string, string> = {
     'image': 'Imagen',
     'imagen': 'Imagen',
@@ -91,8 +91,8 @@ const normalizeContentType = (contentType: string): string => {
     'foto': 'Imagen',
     'video': 'Video',
     'vídeo': 'Video',
-    'sidecar': 'Sidecar',
-    'carousel': 'Sidecar',
+    'sidecar': 'Carrousel', // CAMBIADO de 'Sidecar' a 'Carrousel'
+    'carousel': 'Carrousel', // CAMBIADO de 'Sidecar' a 'Carrousel'
     'text': 'Texto',
     'texto': 'Texto',
     'link': 'Enlace',
@@ -106,11 +106,11 @@ const normalizeContentType = (contentType: string): string => {
   return typeMap[normalized] || contentType.charAt(0).toUpperCase() + contentType.slice(1).toLowerCase();
 };
 
-// Colores fijos para tipos de contenido comunes
+// Colores fijos para tipos de contenido comunes - CAMBIO AQUÍ: Actualizado el color para Carrousel
 const CONTENT_TYPE_COLORS: Record<string, string> = {
   'Imagen': '#3b82f6',      // blue-500
   'Video': '#ef4444',       // red-500
-  'Sidecar': '#8b5cf6',     // violet-500
+  'Carrousel': '#8b5cf6',   // violet-500 - CAMBIADO de 'Sidecar' a 'Carrousel'
   'Texto': '#10b981',       // emerald-500
   'Enlace': '#f59e0b',      // amber-500
   'Compartida': '#6b7280',  // gray-500
