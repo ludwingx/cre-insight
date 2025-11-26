@@ -5,17 +5,21 @@ import { cookies } from "next/headers";
 export default async function Home() {
   const cookieStore = await cookies();
   const hasAuthCookie = cookieStore.has('session');
-  
+
   return (
-    <main className="flex flex-col min-h-screen w-full items-center justify-center bg-gradient-to-br from-white via-white to-slate-100">
+    <main className="flex flex-col min-h-screen w-full items-center justify-center bg-white">
       <div className="flex flex-col items-center gap-4 w-full max-w-2xl px-6">
-        
-        {/* Logo */}
+
+        {/* Logo - Contenedor sin sombra */}
         <div className="flex items-center justify-center mt-4 mb-6">
           <img
-            className="w-48 h-auto object-contain"
+            className="w-48 h-auto object-contain drop-shadow-none shadow-none"
             src="https://www.somare.com/wp-content/uploads/2020/02/logo-cre.jpg"
             alt="Logo C.R.E."
+            style={{
+              filter: 'none',
+              boxShadow: 'none'
+            }}
           />
         </div>
 
@@ -49,7 +53,7 @@ export default async function Home() {
           )}
         </div>
 
-        {/* Footer s e tiene utilizando */}
+        {/* Footer */}
         <footer className="mt-12 text-sm text-gray-400 text-center w-full">
           © {new Date().getFullYear()} Desarrollado por{" "}
           <span className="text-[#2c5d5a] font-semibold">Other Brain 🧠</span>
