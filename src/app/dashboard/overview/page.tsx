@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { 
-  format, 
-  startOfMonth, 
-  endOfMonth, 
-  startOfDay, 
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfDay,
   endOfDay,
-  subMonths, 
-  subWeeks, 
+  subMonths,
+  subWeeks,
   subDays,
   eachDayOfInterval,
-  isWithinInterval 
+  isWithinInterval
 } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -80,9 +80,9 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetError
 // Función para normalizar tipos de contenido
 const normalizeContentType = (contentType: string): string => {
   if (!contentType) return 'Otro';
-  
+
   const normalized = contentType.toLowerCase().trim();
-  
+
   // Mapeo de tipos equivalentes
   const typeMap: Record<string, string> = {
     'image': 'Imagen',
@@ -102,7 +102,7 @@ const normalizeContentType = (contentType: string): string => {
     'reel': 'Reel',
     'story': 'Story'
   };
-  
+
   return typeMap[normalized] || contentType.charAt(0).toUpperCase() + contentType.slice(1).toLowerCase();
 };
 
@@ -160,11 +160,11 @@ export default function OverviewPage() {
   const [error, setError] = useState<Error | null>(null);
   const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [timeRange, setTimeRange] = useState<'day' | 'week' | 'month'>('month');
-  
+
   // Calculate date ranges based on timeRange
   const dateRange = useMemo((): DateRange => {
     const now = new Date();
-    
+
     switch (timeRange) {
       case 'day':
         return {
@@ -196,9 +196,9 @@ export default function OverviewPage() {
     return allPosts.filter(post => {
       try {
         const postDate = new Date(post.fecha);
-        return isWithinInterval(postDate, { 
-          start: dateRange.start, 
-          end: dateRange.end 
+        return isWithinInterval(postDate, {
+          start: dateRange.start,
+          end: dateRange.end
         });
       } catch {
         return false;
@@ -211,9 +211,9 @@ export default function OverviewPage() {
     return allPosts.filter(post => {
       try {
         const postDate = new Date(post.fecha);
-        return isWithinInterval(postDate, { 
-          start: dateRange.previousStart, 
-          end: dateRange.previousEnd 
+        return isWithinInterval(postDate, {
+          start: dateRange.previousStart,
+          end: dateRange.previousEnd
         });
       } catch {
         return false;
@@ -229,14 +229,14 @@ export default function OverviewPage() {
       const hasImage = Boolean(post.tiene_imagen || post.url_image || post.image);
       const postId = post.id || Math.floor(Math.random() * 10000);
       const postPublicId = post.id_publicacion || post.id || String(Math.random().toString(36).substr(2, 9));
-      
+
       // Normalizar el tipo de contenido
       const rawContentType = post.tipoContenido || (hasImage ? 'imagen' : 'texto');
       const normalizedContentType = normalizeContentType(rawContentType);
-      
+
       // Resolver URL y usar plataforma EXACTA desde la columna (sin normalizar)
       const permalink: string = post.url_publicacion || post.url || post.permalink_url || `https://facebook.com/${postPublicId}`;
-      
+
       return {
         id: postId,
         id_publicacion: postPublicId,
@@ -285,7 +285,7 @@ export default function OverviewPage() {
   const fetchPosts = useCallback(async (from: Date, to: Date) => {
     const fromDate = format(from, 'yyyy-MM-dd');
     const toDate = format(to, 'yyyy-MM-dd');
-    
+
     try {
       const fields = [
         'id', 'id_publicacion', 'plataforma', 'texto', 'me_gusta', 'comentarios', 'compartidos',
@@ -293,23 +293,23 @@ export default function OverviewPage() {
         'seguimiento', 'tipoContenido', 'vistas', 'created_at', 'updated_at', 'url', 'permalink_url',
         'likes', 'comments', 'shares', 'views', 'fechapublicacion', 'contenido', 'type', 'image'
       ];
-      
+
       const response = await fetch(
         `/api/posts/extracted?from=${fromDate}&to=${toDate}&fields=${fields.join(',')}`
       );
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (!Array.isArray(data.posts)) {
         console.warn('[WARNING] Expected posts array but got:', data);
         return [];
       }
-      
+
       const normalized = data.posts.map(normalizePost);
       try {
         const platformsSample = normalized.slice(0, 10).map((p: Post) => ({ id: p.id_publicacion, plataforma: p.plataforma }));
@@ -328,35 +328,35 @@ export default function OverviewPage() {
   useEffect(() => {
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
-    
+
     const fetchData = async () => {
       if (!isMounted) return;
-      
+
       setLoading(true);
       setError(null);
-      
+
       timeoutId = setTimeout(() => {
         if (isMounted) {
           setLoading(false);
         }
       }, 15000);
-      
+
       try {
         // Fetch data for a wider range to cover all time ranges
         const now = new Date();
         const threeMonthsAgo = new Date();
         threeMonthsAgo.setMonth(now.getMonth() - 3);
-        
+
         console.log('[OverviewPage] Fetching posts from last 3 months...');
         const apiPosts = await fetchPosts(threeMonthsAgo, now);
-        
+
         if (!isMounted) return;
-        
+
         console.log(`[OverviewPage] Setting ${apiPosts.length} posts`);
         setAllPosts(apiPosts);
-        
+
         console.log('[OverviewPage] Data fetch completed successfully');
-        
+
       } catch (err) {
         console.error('[OverviewPage] Error in fetchData:', err);
         if (isMounted) {
@@ -373,7 +373,7 @@ export default function OverviewPage() {
     };
 
     fetchData();
-    
+
     return () => {
       isMounted = false;
     };
@@ -385,13 +385,13 @@ export default function OverviewPage() {
       if (!posts || posts.length === 0) {
         return { totalPosts: 0, totalReach: 0, totalEngagement: 0, avgEngagement: 0 };
       }
-      
+
       const totalPosts = posts.length;
       const totalReach = posts.reduce((sum, post) => sum + (post.vistas || 0), 0);
-      const totalEngagement = posts.reduce((sum, post) => 
+      const totalEngagement = posts.reduce((sum, post) =>
         sum + (post.me_gusta || 0) + (post.comentarios || 0) + (post.compartidos || 0), 0);
       const avgEngagement = totalPosts > 0 ? Math.round(totalEngagement / totalPosts) : 0;
-      
+
       return { totalPosts, totalReach, totalEngagement, avgEngagement };
     };
 
@@ -424,20 +424,20 @@ export default function OverviewPage() {
   const engagementByType = useMemo(() => {
     console.log('Calculating engagement by type for posts:', filteredPosts);
     const types: Record<string, { count: number, likes: number, comments: number, shares: number, views: number }> = {};
-    
+
     filteredPosts.forEach(post => {
       const type = post.tipoContenido;
       if (!types[type]) {
         types[type] = { count: 0, likes: 0, comments: 0, shares: 0, views: 0 };
       }
-      
+
       types[type].count += 1;
       types[type].likes += post.me_gusta || 0;
       types[type].comments += post.comentarios || 0;
       types[type].shares += post.compartidos || 0;
       types[type].views += post.vistas || 0;
     });
-    
+
     // Calculate averages
     const result = Object.entries(types).map(([type, data]) => ({
       type,
@@ -447,25 +447,25 @@ export default function OverviewPage() {
       avgViews: data.count > 0 ? Math.round((data.views / data.count)) : 0,
       postCount: data.count
     }));
-    
+
     console.log('Calculated engagement by type:', result);
     return result;
   }, [filteredPosts]);
-  
+
   // Get top performing post (excluding shared posts)
   const topPost = useMemo(() => {
     const nonSharedPosts = filteredPosts.filter(post => post.tipoContenido !== 'Compartida');
-    
+
     if (nonSharedPosts.length === 0) return null;
-    
+
     return nonSharedPosts.reduce((topPost, post) => {
       const engagement = (post.me_gusta || 0) + (post.comentarios || 0) + (post.compartidos || 0);
       const topEngagement = (topPost.me_gusta || 0) + (topPost.comentarios || 0) + (topPost.compartidos || 0);
-      
+
       return engagement > topEngagement ? post : topPost;
     }, nonSharedPosts[0]);
   }, [filteredPosts]);
-  
+
   // Log topPost details to debug platform/display mismatch
   useEffect(() => {
     if (topPost) {
@@ -484,7 +484,7 @@ export default function OverviewPage() {
       console.log('[OverviewPage] No topPost available for current range');
     }
   }, [topPost]);
-  
+
   // Format numbers for display
   const formatNumber = (num: number) => {
     if (num >= 1000000) {
@@ -495,18 +495,18 @@ export default function OverviewPage() {
     }
     return num.toString();
   };
-  
+
   // Render a metrics card with shadcn/ui components
-  const MetricsCard = ({ 
-    title, 
-    value, 
-    change = 0, 
-    description, 
+  const MetricsCard = ({
+    title,
+    value,
+    change = 0,
+    description,
     icon,
-    loading = false 
-  }: { 
-    title: string; 
-    value: string | number; 
+    loading = false
+  }: {
+    title: string;
+    value: string | number;
     change?: number;
     description?: string;
     icon?: React.ReactNode;
@@ -548,7 +548,7 @@ export default function OverviewPage() {
             {description && (
               <div className="flex items-center gap-1 mt-1">
                 {!isNeutral ? (
-                  <Badge 
+                  <Badge
                     variant={isPositive ? 'default' : 'destructive'}
                     className="gap-1 text-xs h-5"
                   >
@@ -578,35 +578,35 @@ export default function OverviewPage() {
 
   // Process engagement data for the activity chart
   const processEngagementData = useCallback(() => {
-    const engagementByDate = new Map<string, {posts: number, interactions: number}>();
-    
+    const engagementByDate = new Map<string, { posts: number, interactions: number }>();
+
     filteredPosts.forEach(post => {
       if (!post.fecha) return;
-      
+
       const date = format(new Date(post.fecha), 'yyyy-MM-dd');
       const current = engagementByDate.get(date) || { posts: 0, interactions: 0 };
-      
+
       engagementByDate.set(date, {
         posts: current.posts + 1,
         interactions: current.interactions + (post.me_gusta || 0) + (post.comentarios || 0) + (post.compartidos || 0)
       });
     });
-    
+
     // Fill in missing dates with zero values
     const dateRangeInterval = eachDayOfInterval({
       start: dateRange.start,
       end: dateRange.end
     });
-    
+
     return dateRangeInterval.map(date => {
       const dateStr = format(date, 'yyyy-MM-dd');
       const data = engagementByDate.get(dateStr) || { posts: 0, interactions: 0 };
-      
+
       // Format date as DD/MM with proper spacing
       const day = String(date.getDate()).padStart(2, '0');
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const formattedDate = `${day}/${month}`;
-      
+
       return {
         date: formattedDate,
         posts: data.posts,
@@ -614,16 +614,16 @@ export default function OverviewPage() {
       };
     });
   }, [filteredPosts, dateRange, timeRange]);
-  
+
   // Prepare engagement data for the chart with colores consistentes
-  const processEngagementMetrics = useCallback((): Array<{name: string; value: number; color: string}> => {
+  const processEngagementMetrics = useCallback((): Array<{ name: string; value: number; color: string }> => {
     console.log('Processing engagement metrics for types:', engagementByType);
-    
+
     if (!engagementByType || engagementByType.length === 0) {
       console.log('No engagement data available');
       return [];
     }
-    
+
     // Calculate total engagement for each post type
     return engagementByType.map(item => ({
       name: item.type,
@@ -636,9 +636,9 @@ export default function OverviewPage() {
   if (error) {
     return (
       <div className="container mx-auto p-6">
-        <ErrorFallback 
-          error={error} 
-          resetErrorBoundary={() => window.location.reload()} 
+        <ErrorFallback
+          error={error}
+          resetErrorBoundary={() => window.location.reload()}
         />
       </div>
     );
@@ -646,43 +646,45 @@ export default function OverviewPage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 space-y-6">
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Resumen</h1>
-        <p className="text-muted-foreground">
-          Visión general del rendimiento de tus publicaciones
-        </p>
-      </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">Resumen</h1>
+          <p className="text-muted-foreground">
+            Visión general del rendimiento de tus publicaciones
+          </p>
+        </div>
 
-      {/* Time Range Selector */}
-      <div className="flex items-center gap-4">
-        <Select
-          value={timeRange}
-          onValueChange={(value) => setTimeRange(value as 'day' | 'week' | 'month')}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Seleccionar período" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="day">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
-                Hoy
-              </div>
-            </SelectItem>
-            <SelectItem value="week">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
-                Esta semana
-              </div>
-            </SelectItem>
-            <SelectItem value="month">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
-                Este mes
-              </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Time Range Selector */}
+        <div className="flex items-center gap-4">
+          <Select
+            value={timeRange}
+            onValueChange={(value) => setTimeRange(value as 'day' | 'week' | 'month')}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Seleccionar período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="day">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  Hoy
+                </div>
+              </SelectItem>
+              <SelectItem value="week">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  Esta semana
+                </div>
+              </SelectItem>
+              <SelectItem value="month">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  Este mes
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Date Range Info */}
@@ -729,8 +731,8 @@ export default function OverviewPage() {
       {/* Charts Row */}
       <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-7">
         <div className="lg:col-span-4">
-          <ActivityChart 
-            data={processEngagementData()} 
+          <ActivityChart
+            data={processEngagementData()}
             className={loading ? 'opacity-50 pointer-events-none' : ''}
             timeRange={timeRange}
           />
@@ -741,7 +743,7 @@ export default function OverviewPage() {
               <EngagementMetricsChartSkeleton />
             </div>
           ) : (
-            <EngagementMetricsChart 
+            <EngagementMetricsChart
               data={processEngagementMetrics()}
             />
           )}
@@ -776,11 +778,11 @@ export default function OverviewPage() {
                 <p className="text-muted-foreground mt-1 line-clamp-5">
                   {topPost.texto || 'Sin contenido'}
                 </p>
-                
+
                 {topPost.url_publicacion && (
                   <div className="mt-3">
                     <Button asChild variant="default" size="sm">
-                      <a 
+                      <a
                         href={topPost.url_publicacion}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -793,24 +795,29 @@ export default function OverviewPage() {
                   </div>
                 )}
               </div>
-              
+
               {/* Post Thumbnail */}
               <div className="w-full md:w-48 flex-shrink-0">
                 {topPost.url_image ? (
                   <div className="relative aspect-square w-full overflow-hidden rounded-lg border bg-muted">
-                    <img 
+                    <img
                       src={topPost.url_image}
                       alt="Miniatura de la publicación"
                       className="h-full w-full object-cover"
                     />
                   </div>
                 ) : (
-                  <div className="flex aspect-square w-full items-center justify-center rounded-lg border bg-muted text-muted-foreground">
-                    <span className="text-xs text-center p-2">Sin imagen</span>
+                  <div className="flex aspect-square w-full items-center justify-center rounded-lg border bg-muted">
+                    {/* Reemplazar "Sin imagen" con el logo de CRE */}
+                    <img
+                      src="/logos/cre-logo.png"
+                      alt="Logo CRE"
+                      className="h-16 w-16 object-contain opacity-80"
+                    />
                   </div>
                 )}
               </div>
-              
+
               {/* Engagement Metrics - Only show for non-shared posts */}
               {topPost.tipoContenido !== 'Compartida' && (
                 <div className="space-y-2 min-w-[200px]">
@@ -822,7 +829,7 @@ export default function OverviewPage() {
                     </div>
                   </div>
                   <Progress value={Math.min((topPost.me_gusta || 0) / 100 * 100, 100)} className="h-2" />
-                  
+
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Comentarios</span>
                     <div className="flex items-center gap-2">
@@ -831,7 +838,7 @@ export default function OverviewPage() {
                     </div>
                   </div>
                   <Progress value={Math.min((topPost.comentarios || 0) / 50 * 100, 100)} className="h-2" />
-                  
+
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Compartidas</span>
                     <div className="flex items-center gap-2">

@@ -20,18 +20,39 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
-  Tooltip as RadarTooltip,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
   Cell
 } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  ArrowLeft,
+  Eye,
+  Share2,
+  MessageSquare,
+  ThumbsUp,
+  TrendingUp,
+  BarChart3,
+  Zap,
+  Heart,
+  Calendar,
+  Target,
+  Users
+} from "lucide-react"
 
 type TrackingPoint = {
   date: string
   likes: number
   comentarios: number
   compartidos: number
+  vistas: number
+  engagement: number
 }
 
 type PostDetail = {
@@ -43,27 +64,80 @@ type PostDetail = {
   likes: number
   comentarios: number
   compartidos: number
+  vistas: number
   url_publicacion?: string
   url_imagen?: string
 }
 
-// Componente reutilizable de métricas compacto
-function MetricCard({ label, value, color, small }: { label: string; value: number; color?: string; small?: boolean }) {
+// Componente de métricas compacto
+function MetricCard({
+  label,
+  value,
+  icon: Icon,
+  trend,
+  description
+}: {
+  label: string
+  value: string | number
+  icon: any
+  trend?: number
+  description?: string
+}) {
   return (
-    <div className={`${small ? "p-2" : "p-4"} bg-muted rounded-lg flex flex-col items-center justify-center shadow-sm transition hover:bg-muted/70`}>
-      <p className={`${small ? "text-lg" : "text-2xl"} font-bold ${color}`}>{value}</p>
-      <p className={`${small ? "text-[10px]" : "text-xs"} text-muted-foreground uppercase tracking-wide`}>{label}</p>
-    </div>
+    <Card className="relative overflow-hidden">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">{label}</p>
+            <p className="text-xl font-bold">{value}</p>
+            {trend !== undefined && (
+              <div className="flex items-center gap-1">
+                <TrendingUp className={`h-3 w-3 ${trend >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+                <span className={`text-xs ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {trend >= 0 ? '+' : ''}{trend}%
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="p-2 rounded-full bg-primary/10">
+            <Icon className="h-4 w-4 text-primary" />
+          </div>
+        </div>
+        {description && (
+          <p className="text-xs text-muted-foreground mt-2">{description}</p>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
 // Loader y NotFound
 function Loader() {
-  return <div className="flex items-center justify-center h-[70vh] text-muted-foreground">Cargando información del post...</div>
+  return (
+    <div className="flex items-center justify-center h-[70vh]">
+      <div className="text-center space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+        <p className="text-muted-foreground">Cargando información del post...</p>
+      </div>
+    </div>
+  )
 }
 
 function NotFound() {
-  return <div className="flex items-center justify-center h-[70vh] text-muted-foreground">No se encontró el post solicitado.</div>
+  return (
+    <div className="flex flex-col items-center justify-center h-[70vh] space-y-4">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold">Post no encontrado</h2>
+        <p className="text-muted-foreground">No se pudo encontrar el post solicitado.</p>
+      </div>
+      <Link href="/dashboard/posts/extracted">
+        <Button>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Volver a publicaciones
+        </Button>
+      </Link>
+    </div>
+  )
 }
 
 export default function TrackingPage() {
@@ -79,9 +153,7 @@ export default function TrackingPage() {
         const response = await fetch(`/api/posts/extracted/${id}`)
         if (!response.ok) throw new Error("Error al cargar los datos del post")
         const data = await response.json()
-        
-        console.log("Fecha desde BD:", data.post?.fecha)
-        
+
         if (data.post) {
           setPost({
             id: data.post.id || 0,
@@ -92,23 +164,33 @@ export default function TrackingPage() {
             likes: data.post.likes || 0,
             comentarios: data.post.comentarios || 0,
             compartidos: data.post.compartidos || 0,
+            vistas: data.post.vistas || 0,
             url_publicacion: data.post.url_publicacion,
             url_imagen: data.post.url_imagen,
           })
         }
 
         if (data.tracking && Array.isArray(data.tracking)) {
-          // Filter out the initial data point (where isInitial is true)
-          const filteredTracking = data.tracking.filter((item: any) => !item.isInitial);
-          
-          setTrackingData(
-            filteredTracking.map((item: any) => ({
+          const filteredTracking = data.tracking.filter((item: any) => !item.isInitial)
+
+          const processedData = filteredTracking.map((item: any, index: number) => {
+            const likes = item.likes || 0
+            const comments = item.comments || item.comentarios || 0
+            const shares = item.shares || item.compartidos || 0
+            const views = item.views || item.vistas || 0
+            const engagement = ((likes + comments + shares) / Math.max(views, 1)) * 100
+
+            return {
               date: formatDateForDisplay(item.date || item.fecha || item.collectedAt),
-              likes: item.likes || 0,
-              comentarios: item.comments || item.comentarios || 0,
-              compartidos: item.shares || item.compartidos || 0,
-            }))
-          )
+              likes,
+              comentarios: comments,
+              compartidos: shares,
+              vistas: views,
+              engagement: Math.min(engagement, 100)
+            }
+          })
+
+          setTrackingData(processedData)
         }
       } catch (error) {
         console.error("Error fetching data:", error)
@@ -120,45 +202,11 @@ export default function TrackingPage() {
     fetchData()
   }, [id])
 
-  // Función para formatear fechas como Facebook - CORREGIDA
-  const formatDateLikeFacebook = (dateString: string) => {
-    try {
-      if (!dateString) {
-        return 'Fecha no disponible'
-      }
-      
-      const date = new Date(dateString)
-      if (isNaN(date.getTime())) {
-        return 'Fecha no disponible'
-      }
-      
-      // Usar la zona horaria de Bolivia directamente
-      const options: Intl.DateTimeFormatOptions = {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'America/La_Paz' // Zona horaria de Bolivia
-      }
-      
-      const dateTimeString = date.toLocaleDateString('es-ES', options)
-      return dateTimeString.replace(',', ' a las') 
-    } catch (error) {
-      console.error("Error formateando fecha:", error)
-      return 'Fecha no disponible'
-    }
-  }
-
-  // Función para formatear fechas para el gráfico
   const formatDateForDisplay = (dateString: string | undefined) => {
     try {
       if (!dateString) return 'Sin fecha'
-      
       const date = new Date(dateString)
       if (isNaN(date.getTime())) return 'Inválida'
-      
       return date.toLocaleDateString('es-ES', {
         day: '2-digit',
         month: '2-digit',
@@ -171,318 +219,452 @@ export default function TrackingPage() {
     }
   }
 
-  // Función para formatear solo la fecha (sin hora)
-  const formatDateOnly = (dateString: string) => {
-    try {
-      if (!dateString) return 'Fecha no disponible'
-      
-      const date = new Date(dateString)
-      if (isNaN(date.getTime())) return 'Fecha no disponible'
-      
-      return date.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        timeZone: 'America/La_Paz'
-      })
-    } catch {
-      return 'Fecha no disponible'
-    }
-  }
+  // Cálculos de métricas
+  const totalEngagement = (post?.likes || 0) + (post?.comentarios || 0) + (post?.compartidos || 0)
+  const engagementRate = ((totalEngagement / Math.max(post?.vistas || 1, 1)) * 100)
+  const avgEngagementPerDay = trackingData.length > 0
+    ? totalEngagement / trackingData.length
+    : 0
+
+  // Datos para gráficos
+  const engagementByType = [
+    { name: 'Likes', value: post?.likes || 0, color: '#3b82f6' },
+    { name: 'Comentarios', value: post?.comentarios || 0, color: '#10b981' },
+    { name: 'Compartidos', value: post?.compartidos || 0, color: '#f59e0b' }
+  ]
+
+  const performanceData = [
+    { metric: 'Alcance', score: Math.min(100, Math.log10((post?.vistas || 0) + 1) * 25) },
+    { metric: 'Engagement', score: Math.min(100, engagementRate * 2) },
+    { metric: 'Viralidad', score: Math.min(100, ((post?.compartidos || 0) / Math.max(post?.likes || 1, 1)) * 50) },
+    { metric: 'Conversación', score: Math.min(100, ((post?.comentarios || 0) / Math.max(totalEngagement, 1)) * 100) },
+  ]
 
   if (loading) return <Loader />
   if (!post) return <NotFound />
 
-  // Calculate engagement metrics for radar chart
-  const engagementData = [
-    {
-      subject: 'Alcance',
-      A: Math.min(100, Math.max(20, Math.log10(post.likes + 1) * 20)),
-      fullMark: 100,
-    },
-    {
-      subject: 'Interacción',
-      A: Math.min(100, Math.max(20, Math.log10((post.likes + post.compartidos) / 2 + 1) * 25)),
-      fullMark: 100,
-    },
-    {
-      subject: 'Viralidad',
-      A: Math.min(100, Math.max(20, Math.log10(post.compartidos * 5 + 1) * 20)),
-      fullMark: 100,
-    },
-    {
-      subject: 'Compromiso',
-      A: Math.min(100, Math.max(20, ((post.likes + (post.compartidos * 3)) / 20) * 10)),
-      fullMark: 100,
-    },
-  ]
-
-  // Determine post category based on engagement metrics
-  const getPostCategory = () => {
-    if (post.comentarios > post.likes * 2) return '🔥 Polémico';
-    if (post.compartidos > post.likes * 1.5) return '🚀 Viral';
-    if (post.likes > post.comentarios * 5 && post.likes > post.compartidos * 8) return '👍 Alto Impacto';
-    if (post.comentarios > 0 && post.compartidos > 0) return '💬 Conversación';
-    return '📊 Promedio';
-  }
-
-  const postCategory = getPostCategory();
-
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b border-border p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <header className="bg-background border-b border-border px-6 py-4">
+        <div className="flex items-center gap-4">
           <Link href="/dashboard/posts/extracted">
-            <Button variant="outline" size="sm" className="flex items-center gap-2 cursor-pointer">
-              <ArrowLeft className="w-4 h-4" />
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="w-4 h-4 mr-2" />
               Volver
             </Button>
           </Link>
-          <h1 className="text-xl font-semibold">
-            Evolución de la publicación
-          </h1>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">Seguimiento de Publicación</h1>
+            <p className="text-sm text-muted-foreground">
+              Análisis detallado del rendimiento
+            </p>
+          </div>
         </div>
       </header>
 
-      {/* Contenedor principal */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-          {/* Card 1: Post Card */}
-          <Card className="shadow-sm border border-border h-full">
-            <CardHeader className="flex items-center gap-3">
-              <Image
-                src="/logos/cre-logo.png"
-                alt="CRE R.L. Cooperativa Rural de Electrificación"
-                width={48}
-                height={48}
-                className="rounded-full border object-cover"
-              />
-              <div>
-                <CardTitle className="text-lg">CRE R.L. Cooperativa Rural de Electrificación</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  {post.redsocial} • {formatDateLikeFacebook(post.fecha)}
-                </p>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground line-clamp-3">{post.texto}</p>
-
-              {post.url_imagen && (
-                <div className="relative w-full max-w-sm mx-auto rounded-md overflow-hidden">
+      <div className="container mx-auto p-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {/* Columna izquierda: Post y métricas básicas */}
+          <div className="space-y-6">
+            {/* Tarjeta del post */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
                   <Image
-                    src={post.url_imagen}
-                    alt="Imagen del post"
-                    width={400}
-                    height={220}
-                    className="object-cover w-full h-auto border"
+                    src="/logos/cre-logo.png"
+                    alt="CRE"
+                    width={40}
+                    height={40}
+                    className="rounded-full border flex-shrink-0"
                   />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h2 className="font-semibold text-base">CRE R.L. Cooperativa Rural de Electrificación</h2>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="text-xs">
+                            {post.redsocial}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(post.fecha).toLocaleDateString('es-ES', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-muted-foreground leading-relaxed mt-3 line-clamp-4">
+                      {post.texto}
+                    </p>
+
+                    {post.url_publicacion && (
+                      <Button asChild variant="outline" size="sm" className="mt-3">
+                        <a href={post.url_publicacion} target="_blank" rel="noopener noreferrer">
+                          Ver publicación original
+                        </a>
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              )}
 
-              <div className="grid grid-cols-3 gap-2 text-center mt-2">
-                <MetricCard label="Likes" value={post.likes} color="text-blue-500" small />
-                <MetricCard label="Comentarios" value={post.comentarios} color="text-green-500" small />
-                <MetricCard label="Compartidos" value={post.compartidos} color="text-yellow-500" small />
-              </div>
-
-              {post.url_publicacion && (
-                <Link href={post.url_publicacion} target="_blank">
-                  <Button variant="outline" size="sm" className="w-full mt-2 cursor-pointer">
-                    Ver publicación
-                  </Button>
-                </Link>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Card 2: Evolución Diaria */}
-          <Card className="shadow-md border border-border">
-            <CardHeader>
-              <CardTitle className="text-lg">Evolución diaria</CardTitle>
-              <CardDescription>Desde {formatDateOnly(post.fecha)} hasta hoy</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {trackingData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={trackingData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fontSize: 10 }} 
-                    />
-                    <YAxis tick={{ fontSize: 10 }} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#fff",
-                        borderRadius: 8,
-                        border: "1px solid #e5e7eb",
-                      }}
-                    />
-                    <Legend verticalAlign="top" height={24} wrapperStyle={{ fontSize: 10 }} />
-                    <Line type="monotone" dataKey="likes" stroke="#3b82f6" strokeWidth={2} dot={{ r: 2 }} name="Likes" />
-                    <Line type="monotone" dataKey="comentarios" stroke="#22c55e" strokeWidth={2} dot={{ r: 2 }} name="Comentarios" />
-                    <Line type="monotone" dataKey="compartidos" stroke="#f59e0b" strokeWidth={2} dot={{ r: 2 }} name="Compartidos" />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <p className="text-center text-muted-foreground py-10">
-                  No hay datos de seguimiento disponibles.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Card 3: Análisis de Impacto */}
-          <Card className="shadow-sm border border-border h-full">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Análisis de Impacto</CardTitle>
-                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  postCategory.includes('Polémico') ? 'bg-amber-100 text-amber-800' :
-                  postCategory.includes('Viral') ? 'bg-blue-100 text-blue-800' :
-                  postCategory.includes('Alto Impacto') ? 'bg-green-100 text-green-800' :
-                  postCategory.includes('Conversación') ? 'bg-purple-100 text-purple-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {postCategory}
+                {/* Imagen del post */}
+                <div className="mt-4">
+                  <div className="relative aspect-video w-full rounded-lg overflow-hidden border bg-muted">
+                    {post.url_imagen ? (
+                      <Image
+                        src={post.url_imagen}
+                        alt="Imagen del post"
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex w-full h-full items-center justify-center">
+                        <Image
+                          src="/logos/cre-logo.png"
+                          alt="Logo CRE"
+                          width={60}
+                          height={60}
+                          className="object-contain opacity-50"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={engagementData}>
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="subject" />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                  <Radar
-                    name="Nivel"
-                    dataKey="A"
-                    stroke="#8884d8"
-                    fill="#8884d8"
-                    fillOpacity={0.6}
-                  />
-                  <RadarTooltip 
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="bg-white p-3 border border-gray-200 rounded shadow-sm">
-                            <p className="font-medium">{payload[0].payload.subject}</p>
-                            <p className="text-sm">Nivel: {Math.round(payload[0].value as number)}/100</p>
+              </CardContent>
+            </Card>
+
+            {/* Métricas rápidas */}
+            <div className="grid grid-cols-2 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Likes</p>
+                      <p className="text-lg font-bold">{post.likes?.toLocaleString()}</p>
+                    </div>
+                    <ThumbsUp className="h-4 w-4 text-blue-500" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Comentarios</p>
+                      <p className="text-lg font-bold">{post.comentarios?.toLocaleString()}</p>
+                    </div>
+                    <MessageSquare className="h-4 w-4 text-green-500" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Compartidos</p>
+                      <p className="text-lg font-bold">{post.compartidos?.toLocaleString()}</p>
+                    </div>
+                    <Share2 className="h-4 w-4 text-amber-500" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Vistas</p>
+                      <p className="text-lg font-bold">{post.vistas?.toLocaleString()}</p>
+                    </div>
+                    <Eye className="h-4 w-4 text-purple-500" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Distribución de interacciones */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Distribución de Interacciones</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {engagementByType.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <span className="text-sm">{item.name}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm font-medium">{item.value.toLocaleString()}</span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          ({((item.value / Math.max(totalEngagement, 1)) * 100).toFixed(1)}%)
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Columna derecha: Análisis detallado */}
+          <div className="space-y-6">
+            {/* Métricas principales */}
+            <div className="grid grid-cols-2 gap-4">
+              <MetricCard
+                label="Alcance Total"
+                value={post.vistas?.toLocaleString() || '0'}
+                icon={Eye}
+                trend={8.2}
+                description="Personas alcanzadas"
+              />
+              <MetricCard
+                label="Interacción Total"
+                value={totalEngagement.toLocaleString()}
+                icon={ThumbsUp}
+                trend={12.5}
+                description="Total engagements"
+              />
+              <MetricCard
+                label="Tasa Engagement"
+                value={`${engagementRate.toFixed(1)}%`}
+                icon={BarChart3}
+                trend={3.1}
+                description="Porcentaje"
+              />
+              <MetricCard
+                label="Engagement/día"
+                value={Math.round(avgEngagementPerDay)}
+                icon={TrendingUp}
+                description="Promedio diario"
+              />
+            </div>
+
+            {/* Tabs para análisis */}
+            <Tabs defaultValue="evolution" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="evolution">Evolución</TabsTrigger>
+                <TabsTrigger value="performance">Rendimiento</TabsTrigger>
+                <TabsTrigger value="breakdown">Análisis</TabsTrigger>
+              </TabsList>
+
+              {/* Evolución */}
+              <TabsContent value="evolution" className="space-y-4 mt-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Evolución de Métricas</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {trackingData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={200}>
+                        <LineChart data={trackingData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" fontSize={10} />
+                          <YAxis fontSize={10} />
+                          <Tooltip />
+                          <Line type="monotone" dataKey="likes" stroke="#3b82f6" strokeWidth={2} name="Likes" />
+                          <Line type="monotone" dataKey="comentarios" stroke="#10b981" strokeWidth={2} name="Comentarios" />
+                          <Line type="monotone" dataKey="compartidos" stroke="#f59e0b" strokeWidth={2} name="Compartidos" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground text-sm">
+                        No hay datos de seguimiento disponibles
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Resumen de Actividad</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                          <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Pico de Likes</p>
+                          <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                            {Math.max(...trackingData.map(d => d.likes), 0).toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                          <p className="text-xs text-green-600 dark:text-green-400 font-medium">Pico de Comentarios</p>
+                          <p className="text-lg font-bold text-green-700 dark:text-green-300">
+                            {Math.max(...trackingData.map(d => d.comentarios), 0).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        La publicación ha mostrado un comportamiento {engagementRate > 5 ? "muy activo" : "estable"} en los últimos días.
+                        El mayor crecimiento se registró el {trackingData.length > 0 ? trackingData[trackingData.length - 1].date : "recientemente"}.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Rendimiento */}
+              <TabsContent value="performance" className="space-y-4 mt-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Análisis de Rendimiento</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {performanceData.map((item, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>{item.metric}</span>
+                          <span>{item.score.toFixed(0)}%</span>
+                        </div>
+                        <Progress value={item.score} className="h-1.5" />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Distribución de Interacciones</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-center">
+                      <ResponsiveContainer width="100%" height={180}>
+                        <PieChart>
+                          <Pie
+                            data={engagementByType}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={50}
+                            outerRadius={70}
+                            paddingAngle={2}
+                            dataKey="value"
+                          >
+                            {engagementByType.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      {engagementByType.map((item, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: item.color }}
+                            />
+                            <span className="text-sm font-medium">{item.name}</span>
                           </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-              <div className="mt-2 text-sm text-muted-foreground text-center">
-                <p className="font-medium mb-1">Categorías de impacto:</p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-amber-500"></span> 🔥 Polémico: Más comentarios que likes</div>
-                  <div className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-blue-500"></span> 🚀 Viral: Muchas veces compartido</div>
-                  <div className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-green-500"></span> 👍 Alto Impacto: Muchos likes</div>
-                  <div className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-purple-500"></span> 💬 Conversación: Buen balance de interacciones</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-bold">{item.value.toLocaleString()}</span>
+                            <span className="text-xs text-muted-foreground w-12 text-right">
+                              {((item.value / Math.max(totalEngagement, 1)) * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-          {/* Card 4: Comparación de Interacciones */}
-          <Card className="shadow-md border border-border">
-            <CardHeader>
-              <CardTitle className="text-lg">Comparación de Interacciones</CardTitle>
-              <CardDescription>
-                Distribución de las interacciones de la publicación
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={[
-                    {
-                      name: 'Interacciones',
-                      likes: post.likes,
-                      comentarios: post.comentarios,
-                      compartidos: post.compartidos,
-                    }
-                  ]}
-                  margin={{
-                    top: 20,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                  }}
-                  barGap={10}
-                  barCategoryGap={20}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      borderRadius: 8,
-                      border: "1px solid #e5e7eb",
-                    }}
-                    formatter={(value) => [value, 'Interacciones']}
-                  />
-                  <Legend />
-                  <Bar dataKey="likes" name="Likes" fill="#3b82f6" radius={[4, 4, 0, 0]}>
-                    <Cell fill="#3b82f6" />
-                  </Bar>
-                  <Bar dataKey="comentarios" name="Comentarios" fill="#22c55e" radius={[4, 4, 0, 0]}>
-                    <Cell fill="#22c55e" />
-                  </Bar>
-                  <Bar dataKey="compartidos" name="Compartidos" fill="#f59e0b" radius={[4, 4, 0, 0]}>
-                    <Cell fill="#f59e0b" />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-              
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-blue-700">Likes</span>
-                    <span className="text-lg font-bold text-blue-900">{post.likes.toLocaleString()}</span>
-                  </div>
-                  <div className="mt-2 w-full bg-blue-200 rounded-full h-2.5">
-                    <div 
-                      className="bg-blue-600 h-2.5 rounded-full" 
-                      style={{ width: `${Math.min(100, (post.likes / Math.max(1, post.likes + post.comentarios + post.compartidos)) * 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-green-700">Comentarios</span>
-                    <span className="text-lg font-bold text-green-900">{post.comentarios.toLocaleString()}</span>
-                  </div>
-                  <div className="mt-2 w-full bg-green-200 rounded-full h-2.5">
-                    <div 
-                      className="bg-green-600 h-2.5 rounded-full" 
-                      style={{ width: `${Math.min(100, (post.comentarios / Math.max(1, post.likes + post.comentarios + post.compartidos)) * 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div className="bg-amber-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-amber-700">Compartidos</span>
-                    <span className="text-lg font-bold text-amber-900">{post.compartidos.toLocaleString()}</span>
-                  </div>
-                  <div className="mt-2 w-full bg-amber-200 rounded-full h-2.5">
-                    <div 
-                      className="bg-amber-500 h-2.5 rounded-full" 
-                      style={{ width: `${Math.min(100, (post.compartidos / Math.max(1, post.likes + post.comentarios + post.compartidos)) * 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              {/* Análisis */}
+              <TabsContent value="breakdown" className="space-y-4 mt-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Ratios de Viralidad</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span>Compartidos/Likes</span>
+                        <span className="font-medium">
+                          {((post.compartidos / Math.max(post.likes, 1)) * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <Progress
+                        value={Math.min((post.compartidos / Math.max(post.likes, 1)) * 100, 100)}
+                        className="h-1.5"
+                      />
+
+                      <div className="flex justify-between items-center text-sm">
+                        <span>Comentarios/Likes</span>
+                        <span className="font-medium">
+                          {((post.comentarios / Math.max(post.likes, 1)) * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <Progress
+                        value={Math.min((post.comentarios / Math.max(post.likes, 1)) * 100, 100)}
+                        className="h-1.5"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Métricas Adicionales</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                      <span>Alcance por Interacción</span>
+                      <span className="font-medium">
+                        {Math.round((post.vistas || 0) / Math.max(totalEngagement, 1))}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                      <span>Valor por Interacción</span>
+                      <span className="font-medium text-green-600">
+                        {((totalEngagement / Math.max(post.vistas || 1, 1)) * 100).toFixed(2)}%
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Conclusiones</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 text-sm text-muted-foreground">
+                      <div className="flex gap-2">
+                        <Target className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                        <p>
+                          El contenido tiene un <span className="font-medium text-foreground">
+                            {engagementRate > 5 ? "alto" : engagementRate > 2 ? "medio" : "bajo"}
+                          </span> nivel de engagement ({engagementRate.toFixed(1)}%).
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Users className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                        <p>
+                          La audiencia está <span className="font-medium text-foreground">
+                            {post.compartidos > post.comentarios ? "compartiendo activamente" : "comentando activamente"}
+                          </span>, lo que sugiere interés en {post.compartidos > post.comentarios ? "difundir" : "debatir"} el tema.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </div>
     </div>

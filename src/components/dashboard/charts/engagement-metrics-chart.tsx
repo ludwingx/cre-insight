@@ -23,7 +23,7 @@ interface EngagementMetricsChartProps {
 
 export function EngagementMetricsChart({ data, className }: EngagementMetricsChartProps) {
   console.log('Rendering EngagementMetricsChart with:', data);
-  
+
   if (!data || data.length === 0) {
     return (
       <Card className={className}>
@@ -40,13 +40,13 @@ export function EngagementMetricsChart({ data, className }: EngagementMetricsCha
 
   // Calculate total for percentage
   const total = data.reduce((sum, item) => sum + item.value, 0);
-  
+
   // Format data with percentages
   const chartData = data.map(item => ({
     ...item,
     percentage: total > 0 ? Math.round((item.value / total) * 100) : 0
   }));
-  
+
   // Custom tooltip component
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -70,7 +70,7 @@ export function EngagementMetricsChart({ data, className }: EngagementMetricsCha
         <CardTitle className="text-sm font-medium">Distribución</CardTitle>
         <CardDescription>Porcentaje de interacciones por tipo de contenido</CardDescription>
       </CardHeader>
-      <CardContent className="h-[300px] sm:h-[350px]">
+      <CardContent className="h-[400px] sm:h-[450px]">
         <div className="flex flex-col h-full">
           <div className="flex-1">
             <ResponsiveContainer width="100%" height="100%">
@@ -91,7 +91,7 @@ export function EngagementMetricsChart({ data, className }: EngagementMetricsCha
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
-                <Legend 
+                <Legend
                   verticalAlign="bottom"
                   height={36}
                   formatter={(value, entry: any) => {
@@ -108,12 +108,12 @@ export function EngagementMetricsChart({ data, className }: EngagementMetricsCha
               </PieChart>
             </ResponsiveContainer>
           </div>
-          
+
           {/* Simple percentage summary */}
           <div className="mt-4 grid grid-cols-2 gap-2">
             {chartData.slice(0, 4).map((item, index) => (
               <div key={index} className="flex items-center">
-                <div 
+                <div
                   className="w-3 h-3 rounded-full mr-2 flex-shrink-0"
                   style={{ backgroundColor: item.color }}
                 />

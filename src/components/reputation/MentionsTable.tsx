@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -103,20 +102,20 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
 
   return (
     <div className="rounded-md border overflow-hidden">
-    <div className="relative overflow-auto max-h-[calc(80vh-200px)]">
-      <Table className="w-full [&_tr]:h-auto [&_td]:align-middle text-xs sm:text-sm">
-        <TableHeader className="sticky top-0 bg-background z-10">
-          <TableRow>
-            <TableHead className="text-center">Plataforma</TableHead>
-            <TableHead className="text-center">Fuente</TableHead>
-            <TableHead className="text-center">Fecha</TableHead>
-            <TableHead className="text-center">Imagen</TableHead>
-            <TableHead className="min-w-[200px] md:min-w-[300px] text-center">Contenido</TableHead>
-            <TableHead className="text-center">Razón Específica</TableHead>
-            <TableHead className="text-center">Comentario Principal</TableHead>
-            <TableHead className="text-center">Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
+      <div className="relative overflow-auto max-h-[calc(80vh-200px)]">
+        <Table className="w-full [&_tr]:h-auto [&_td]:align-middle text-xs sm:text-sm">
+          <TableHeader className="sticky top-0 bg-background z-10">
+            <TableRow>
+              <TableHead className="text-center">Plataforma</TableHead>
+              <TableHead className="text-center">Fuente</TableHead>
+              <TableHead className="text-center">Fecha</TableHead>
+              <TableHead className="text-center">Imagen</TableHead>
+              <TableHead className="min-w-[200px] md:min-w-[300px] text-center">Contenido</TableHead>
+              <TableHead className="text-center">Razón Específica</TableHead>
+              <TableHead className="text-center">Comentario Principal</TableHead>
+              <TableHead className="text-center">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
           <TableBody>
             {mentions.map((mention) => (
               <TableRow key={mention.id}>
@@ -129,8 +128,8 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
                   <div className="flex flex-col items-center justify-center h-full">
                     <span className="text-sm font-medium">{mention.sourceName}</span>
                     {mention.sourceUrl && (
-                      <Link 
-                        href={mention.sourceUrl} 
+                      <Link
+                        href={mention.sourceUrl}
                         target="_blank"
                         className="text-xs text-blue-500 hover:underline mt-1"
                         onClick={(e) => e.stopPropagation()}
@@ -140,7 +139,7 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
                     )}
                   </div>
                 </TableCell>
-            
+
                 <TableCell className="text-center align-middle">
                   <div className="flex flex-col items-center justify-center h-full">
                     <span className="whitespace-nowrap">
@@ -215,10 +214,10 @@ export function MentionsTable({ initialMentions }: { initialMentions: Mention[] 
                 </TableCell>
                 <TableCell className="align-middle">
                   <div className="flex justify-center gap-2">
-                    <Link 
-                      href={mention.mentionUrl} 
-                      target="_blank"  
-                      className="text-blue-500 hover:underline whitespace-nowrap" 
+                    <Link
+                      href={mention.mentionUrl}
+                      target="_blank"
+                      className="text-blue-500 hover:underline whitespace-nowrap"
                       rel="noopener noreferrer"
                     >
                       Ver post

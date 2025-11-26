@@ -16,6 +16,7 @@ import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { ExtractionDialog } from "@/components/extracted/ExtractionDialog"
 
 type SortOption = 'date-desc' | 'date-asc' | 'likes-desc' | 'likes-asc' | 'comments-desc' | 'comments-asc' | 'shares-desc' | 'shares-asc' | 'views-desc' | 'views-asc'
 
@@ -24,7 +25,7 @@ export default function ExtractedPostsPage() {
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState<DateRange>(getCurrentMonthRange())
-  
+
   // Filter states
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedPlatform, setSelectedPlatform] = useState<string>("all")
@@ -32,12 +33,13 @@ export default function ExtractedPostsPage() {
   const [sortBy, setSortBy] = useState<SortOption>('date-desc')
   type SeguimientoFilter = 'all' | 'tracked' | 'not-tracked'
   const [seguimientoFilter, setSeguimientoFilter] = useState<SeguimientoFilter>('all')
+  const [isExtractionDialogOpen, setIsExtractionDialogOpen] = useState(false)
 
   // Available platforms and content types for filters
   const platforms = useMemo(() => {
     return ['Facebook', 'Instagram', 'Tiktok']
   }, [])
-  
+
   const postContentTypes = useMemo(() => {
     return Array.from(new Set(allPosts.map(post => post.tipoContenido))).filter(Boolean) as string[]
   }, [allPosts])
@@ -47,21 +49,21 @@ export default function ExtractedPostsPage() {
     setLoading(true);
     try {
       const url = new URL('/api/posts/extracted', window.location.origin);
-      
+
       if (startDate && endDate) {
         const startOfDay = new Date(startDate);
         startOfDay.setHours(0, 0, 0, 0);
-        
+
         const endOfDay = new Date(endDate);
         endOfDay.setHours(23, 59, 59, 999);
-        
+
         url.searchParams.append('from', startOfDay.toISOString());
         url.searchParams.append('to', endOfDay.toISOString());
       }
-      
+
       console.log('Fetching posts from:', url.toString());
       const response = await fetch(url.toString());
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Error response:', {
@@ -71,15 +73,15 @@ export default function ExtractedPostsPage() {
         });
         throw new Error(`Error al cargar las publicaciones (${response.status}): ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       console.log('Fetched posts:', data);
-      
+
       if (!Array.isArray(data.posts)) {
         console.error('Unexpected response format:', data);
         throw new Error('Formato de respuesta inesperado del servidor');
       }
-      
+
       // Normalize field names for table expectations
       const normalized = data.posts.map((p: any) => {
         return {
@@ -99,7 +101,7 @@ export default function ExtractedPostsPage() {
           vistas: p.vistas ?? 0,
         } as Post;
       });
-      
+
       setAllPosts(normalized);
       return normalized;
     } catch (error) {
@@ -116,22 +118,22 @@ export default function ExtractedPostsPage() {
   const applyFiltersAndSorting = useCallback((posts: Post[]) => {
     let filtered = posts.filter(post => {
       // Text search
-      const matchesSearch = !searchTerm || 
+      const matchesSearch = !searchTerm ||
         post.texto.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (post.perfil && post.perfil.toLowerCase().includes(searchTerm.toLowerCase()))
-      
+
       // Platform filter
       const matchesPlatform = selectedPlatform === "all" || selectedPlatform === post.redsocial
-      
+
       // Content type filter
       const matchesContentType = contentType === "all" || post.tipoContenido === contentType
-      
+
       // Filter by seguimiento
-      const matchesSeguimiento = 
-        seguimientoFilter === 'all' || 
+      const matchesSeguimiento =
+        seguimientoFilter === 'all' ||
         (seguimientoFilter === 'tracked' && post.seguimiento) ||
         (seguimientoFilter === 'not-tracked' && !post.seguimiento)
-      
+
       return matchesSearch && matchesPlatform && matchesContentType && matchesSeguimiento
     })
 
@@ -174,6 +176,47 @@ export default function ExtractedPostsPage() {
     setSortBy('date-desc')
   }
 
+  const handleExtraction = async (platform: 'facebook' | 'instagram' | 'tiktok') => {
+    setIsExtractionDialogOpen(false)
+    const toastId = toast.loading(`Iniciando extracción de ${platform}...`)
+
+    const webhooks = {
+      facebook: 'https://intelexia-labs-n8n.af9gwe.easypanel.host/webhook-test/creinsights-facebook',
+      instagram: 'https://intelexia-labs-n8n.af9gwe.easypanel.host/webhook-test/creinsights-instagram',
+      tiktok: 'https://intelexia-labs-n8n.af9gwe.easypanel.host/webhook-test/creinsights-tiktok'
+    }
+
+    try {
+      const response = await fetch(webhooks[platform], {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          timestamp: new Date().toISOString(),
+          triggeredBy: 'dashboard_user'
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error del servidor: ${response.statusText}`)
+      }
+
+      toast.success(`Extracción de ${platform} iniciada correctamente`, { id: toastId })
+
+      // Refresh posts after delay
+      setTimeout(() => {
+        if (dateRange?.from) {
+          fetchPosts(dateRange.from, dateRange.to || dateRange.from)
+        }
+      }, 5000)
+
+    } catch (error) {
+      console.error(`Error triggering ${platform} webhook:`, error)
+      toast.error(`Error al iniciar extracción: ${error instanceof Error ? error.message : 'Error desconocido'}`, { id: toastId })
+    }
+  }
+
   const hasActiveFilters = searchTerm || selectedPlatform !== "all" || contentType !== "all" || seguimientoFilter !== 'all' || sortBy !== 'date-desc';
 
   return (
@@ -200,8 +243,8 @@ export default function ExtractedPostsPage() {
                 </h3>
               </div>
               {hasActiveFilters && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={clearFilters}
                   className="h-8 hover:bg-destructive hover:text-destructive-foreground"
@@ -217,7 +260,7 @@ export default function ExtractedPostsPage() {
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Rango de fechas</Label>
                 <div className="flex items-center gap-2">
-                  <DateRangePicker 
+                  <DateRangePicker
                     date={dateRange}
                     onDateChange={setDateRange}
                     className="flex-1"
@@ -226,75 +269,33 @@ export default function ExtractedPostsPage() {
                   />
                 </div>
               </div>
-              
+
               {/* Botones de Acción en la misma fila */}
               <div className="flex items-end gap-2">
-                <Button 
-                  variant="default" 
+                <Button
+                  variant="default"
                   size="sm"
-                  onClick={() => dateRange?.from && fetchPosts(dateRange.from, dateRange.to || dateRange.from)} 
+                  onClick={() => dateRange?.from && fetchPosts(dateRange.from, dateRange.to || dateRange.from)}
                   disabled={loading}
-                  className="h-9 flex-1 text-sm gap-1.5 hover:cursor-pointer border hover:bg-white hover:text-black hover:border"
+                  className="h-9 flex-1 text-sm gap-1.5 hover:cursor-pointer border "
                 >
                   <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                   {loading ? 'Actualizando...' : 'Actualizar'}
                 </Button>
-                <Button 
-                  variant="default" 
-                  size="sm" 
-                  onClick={async () => {
-                    const toastId = toast.loading('Extrayendo nuevas publicaciones...');
-                    
-                    try {
-                      const response = await fetch('/api/scrape', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                      });
-
-                      // Handle non-OK responses
-                      if (!response.ok) {
-                        let errorMessage = 'Error al iniciar el scraping';
-                        try {
-                          const errorData = await response.json();
-                          errorMessage = errorData.error || errorMessage;
-                        } catch (e) {
-                          errorMessage = response.statusText || errorMessage;
-                        }
-                        throw new Error(`Error del servidor (${response.status}): ${errorMessage}`);
-                      }
-
-                      // Try to parse the response as JSON, but handle non-JSON responses
-                      try {
-                        const responseData = await response.json();
-                        console.log('Scraping response:', responseData);
-                      } catch (e) {
-                        console.log('Received non-JSON response, treating as success');
-                      }
-                      
-                      toast.success('Extracción iniciada correctamente', { id: toastId });
-                      
-                      // Refresh the posts after a short delay
-                      setTimeout(() => {
-                        if (dateRange?.from) {
-                          fetchPosts(dateRange.from, dateRange.to || dateRange.from);
-                        }
-                      }, 5000);
-                      
-                    } catch (error) {
-                      console.error('Error al iniciar scraping:', error);
-                      toast.error(
-                        `Error: ${error instanceof Error ? error.message : 'Error desconocido al iniciar el scraping'}`, 
-                        { id: toastId }
-                      );
-                    }
-                  }}
-                  className="h-9 flex-1 text-sm gap-1.5 hover:cursor-pointer border hover:bg-white hover:text-black hover:border"
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="h-9 flex-1 text-sm gap-1.5 hover:cursor-pointer border"
+                  onClick={() => setIsExtractionDialogOpen(true)}
                 >
                   <Scissors className="h-4 w-4" />
                   Extraer
                 </Button>
+                <ExtractionDialog
+                  open={isExtractionDialogOpen}
+                  onOpenChange={setIsExtractionDialogOpen}
+                  onSelect={handleExtraction}
+                />
               </div>
             </div>
 
@@ -372,7 +373,7 @@ export default function ExtractedPostsPage() {
               {/* Seguimiento Filter */}
               <div className="space-y-2">
                 <Label htmlFor="tracked-filter" className="text-sm font-medium">Seguimiento</Label>
-                <Select 
+                <Select
                   value={seguimientoFilter}
                   onValueChange={(value: SeguimientoFilter) => setSeguimientoFilter(value)}
                 >
@@ -391,8 +392,8 @@ export default function ExtractedPostsPage() {
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-transparent">Acción</Label>
                 {hasActiveFilters && (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={clearFilters}
                     className="h-9 w-full hover:bg-destructive hover:text-destructive-foreground"
@@ -405,33 +406,33 @@ export default function ExtractedPostsPage() {
             </div>
           </div>
 
-{/* Posts Table */}
-<div className="rounded-lg p-4 border">
-  {loading ? (
-    <div className="flex justify-center items-center h-32">
-      <p className="text-muted-foreground">Cargando publicaciones...</p>
-    </div>
-  ) : allPosts.length === 0 ? (
-    <div className="flex justify-center items-center h-32">
-      <p className="text-muted-foreground">No hay publicaciones en el rango de fechas seleccionado.</p>
-    </div>
-  ) : filteredPosts.length === 0 ? (
-    <div className="flex flex-col items-center justify-center h-32 space-y-2">
-      <p className="text-muted-foreground">No se encontraron publicaciones con los filtros actuales.</p>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={clearFilters}
-      >
-        Limpiar filtros
-      </Button>
-    </div>
-  ) : (
-    <div className="max-h-[600px] overflow-hidden"> {/* ← Añade este contenedor */}
-      <PostTable posts={filteredPosts} />
-    </div>
-  )}
-</div>
+          {/* Posts Table */}
+          <div className="rounded-lg p-4 border">
+            {loading ? (
+              <div className="flex justify-center items-center h-32">
+                <p className="text-muted-foreground">Cargando publicaciones...</p>
+              </div>
+            ) : allPosts.length === 0 ? (
+              <div className="flex justify-center items-center h-32">
+                <p className="text-muted-foreground">No hay publicaciones en el rango de fechas seleccionado.</p>
+              </div>
+            ) : filteredPosts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-32 space-y-2">
+                <p className="text-muted-foreground">No se encontraron publicaciones con los filtros actuales.</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearFilters}
+                >
+                  Limpiar filtros
+                </Button>
+              </div>
+            ) : (
+              <div className="max-h-[600px] overflow-hidden">
+                <PostTable posts={filteredPosts} />
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>

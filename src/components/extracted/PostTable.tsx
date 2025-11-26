@@ -349,11 +349,14 @@ export function PostTable({ posts }: { posts: Post[] }) {
                           )}
                         </>
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-md text-gray-400">
-                          <span className="text-xs text-center">
-                            {post.url_imagen ? 'Error' : 'Sin imagen'}
-                          </span>
-                        </div>
+                        <div className="flex aspect-square w-full items-center justify-center rounded-lg border bg-muted">
+
+      <img 
+        src="/logos/cre-logo.png" 
+        alt="Logo CRE"
+        className="h-16 w-16 object-contain opacity-80"
+      />
+    </div>
                       )}
                     </div>
                   </div>

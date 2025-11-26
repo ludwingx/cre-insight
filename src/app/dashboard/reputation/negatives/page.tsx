@@ -471,13 +471,13 @@ export default function NegativesPage() {
                   onClick={() =>
                     dateRange?.from
                       ? fetchMentions(
-                          dateRange.from,
-                          dateRange.to || dateRange.from
-                        )
+                        dateRange.from,
+                        dateRange.to || dateRange.from
+                      )
                       : fetchMentions()
                   }
                   disabled={loading}
-                  className="h-8 px-3 text-xs gap-1.5 hover:cursor-pointer border hover:bg-white hover:text-black hover:border"
+                  className="h-8 px-3 text-xs gap-1.5 hover:cursor-pointer border"
                 >
                   <RefreshCw
                     className={`h-3 w-3 ${loading ? "animate-spin" : ""}`}
@@ -519,9 +519,9 @@ export default function NegativesPage() {
                   onClick={() =>
                     dateRange?.from
                       ? fetchMentions(
-                          dateRange.from,
-                          dateRange.to || dateRange.from
-                        )
+                        dateRange.from,
+                        dateRange.to || dateRange.from
+                      )
                       : fetchMentions()
                   }
                   disabled={loading}

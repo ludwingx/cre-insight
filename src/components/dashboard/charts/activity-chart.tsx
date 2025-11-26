@@ -78,7 +78,7 @@ export function ActivityChart({ data, className, timeRange }: ActivityChartProps
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         <ChartContainer
           config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
+          className="aspect-auto h-[400px] w-full"
         >
           <AreaChart data={filteredData}>
             <defs>
@@ -112,15 +112,15 @@ export function ActivityChart({ data, className, timeRange }: ActivityChartProps
                       // Get the index of the data point to access the original date
                       const dataPoint = filteredData.find(item => item.date === value);
                       if (!dataPoint) return value;
-                      
+
                       // For tooltip, we'll show a more detailed date format
                       // Since we're using DD/MM format in the data, we need to parse it back to a date
                       const [day, month] = value.split('/').map(Number);
                       const currentYear = new Date().getFullYear();
                       const date = new Date(currentYear, month - 1, day);
-                      
+
                       if (isNaN(date.getTime())) return value;
-                      
+
                       return date.toLocaleDateString('es-ES', {
                         weekday: 'long',
                         day: 'numeric',

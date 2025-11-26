@@ -34,12 +34,7 @@ import { Toaster } from "sonner";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Separator } from "@/components/ui/separator";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-} from "@/components/ui/breadcrumb";
+import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 import { getSession } from "@/app/actions/auth";
@@ -83,15 +78,7 @@ export default async function DashboardLayout({
 
               <Separator orientation="vertical" className="mr-2 h-4" />
 
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="/dashboard">
-                      Dashboard
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
+              <DynamicBreadcrumb />
             </div>
 
             <div className="ml-auto flex items-center gap-2">
@@ -103,7 +90,6 @@ export default async function DashboardLayout({
         </SidebarInset>
       </SidebarProvider>
 
-      <Toaster position="top-center" richColors />
     </ThemeProvider>
   );
 }

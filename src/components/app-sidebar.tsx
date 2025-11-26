@@ -72,8 +72,8 @@ export function AppSidebar({
               {data.navItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild>
-                    <a 
-                      href={item.url} 
+                    <a
+                      href={item.url}
                       className="flex items-center gap-2 hover:bg-white/10 transition-colors rounded-md p-2"
                     >
                       <item.icon className="w-4 h-4" />
